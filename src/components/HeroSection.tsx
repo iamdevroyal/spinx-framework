@@ -25,23 +25,23 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
   const codeSnippets: Record<typeof activeTab, { filename: string; code: string }> = {
     routing: {
-      filename: 'routes/api.py',
-      code: `from sillo import SilloApp
-from sillo.core.http import Request, Response
+      filename: 'app/Modules/Projects/module.php',
+      code: `use App\\Modules\\Projects\\Infrastructure\\Http\\Controllers\\ProjectController;
+use Spinx\\Routing\\Route;
 
-app = SilloApp(title="Projects API")
+// Declare route gates, middleware & OpenAPI spec in module.php
+Route::get('/projects/{projectId}', [ProjectController::class, 'show'])
+    ->middleware('auth:session')
+    ->openapi(summary: "Fetch project details by ID");
 
-@app.get("/projects/{project_id:int}")
-async def show_project(
-    req: Request,
-    res: Response,
-    project_id: int,
-) -> Response:
-    return res.json({
-        "id": project_id,
-        "name": "Spinx Marketing",
-        "status": "active"
-    })`,
+public function show(Request $request, string $projectId): Response
+{
+    return Response::json([
+        "id" => $projectId,
+        "name" => "Spinx Marketing",
+        "status" => "active"
+    ]);
+}`,
     },
     auth: {
       filename: 'app/Security/AuthPolicy.php',
