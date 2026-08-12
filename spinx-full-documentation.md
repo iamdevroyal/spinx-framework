@@ -70,11 +70,11 @@ deploy target.
 
 ## 2. Installation
 
-Spinx is distributed as a Composer package. The install path is designed
-to require zero manual steps beyond `composer create-project`.
+Spinx projects are created using the `spinx new` CLI command. The install path is designed
+to require zero manual steps beyond `spinx new my-app`.
 
 ```bash
-composer create-project spinx/spinx my-app
+spinx new my-app
 cd my-app
 spinx serve
 ```

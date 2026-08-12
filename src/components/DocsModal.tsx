@@ -24,7 +24,7 @@ export const DocsModal: React.FC<DocsModalProps> = ({ isOpen, onClose }) => {
     'getting-started': {
       title: 'Getting Started with Spinx Framework',
       desc: 'Create a new Spinx application with Composer or the Spinx global CLI executable. Spinx automatically wires RoadRunner or Swoole runtime drivers based on your spinx.json declaration.',
-      code: `$ composer create-project spinx/spinx my-app
+      code: `$ spinx new my-app
 $ cd my-app
 $ spinx serve
 

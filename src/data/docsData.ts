@@ -148,7 +148,7 @@ By bypassing traditional PHP-FPM per-request bootstrap overhead, Spinx hosts you
     path: '/docs/quickstart',
     category: 'Getting Started',
     title: 'Installation & Quickstart',
-    subtitle: 'Zero manual steps beyond composer create-project to get your first Spinx app live.',
+    subtitle: 'Zero manual steps beyond spinx new to get your first Spinx app live.',
     description: 'Get up and running with Spinx on Windows, Linux, or macOS. Learn installer mechanics, system prerequisites, and how dev mode proxies Vite HMR.',
     readTime: '4 min read',
     lastUpdated: 'Updated v1',
@@ -164,11 +164,11 @@ By bypassing traditional PHP-FPM per-request bootstrap overhead, Spinx hosts you
       {
         headingId: 'installation-steps',
         headingTitle: 'Standard Installation',
-        content: `Spinx is distributed as a Composer package. The install path requires zero manual steps beyond a single terminal command:`,
+        content: `Spinx projects are created using the \`spinx new\` CLI command. The install path requires zero manual steps beyond a single terminal command:`,
         codeSnippet: {
           title: 'Terminal - Project Initialization',
           language: 'bash',
-          code: `composer create-project spinx/spinx my-app
+          code: `spinx new my-app
 cd my-app
 spinx serve`,
         },
@@ -176,7 +176,7 @@ spinx serve`,
       {
         headingId: 'installer-automation',
         headingTitle: 'What the Installer Automates',
-        content: `When you execute \`composer create-project\`, Spinx's post-install script automatically:
+        content: `When you execute \`spinx new my-app\`, Spinx's scaffolding engine automatically:
 1. Detects host OS and CPU architecture (Windows x64, macOS ARM64/x64, Linux x64).
 2. Downloads the matching RoadRunner binary into the local bin directory — eliminating compiled PECL C extensions for default installs.
 3. Scaffolds a complete \`spinx.json\` file pre-configured with RoadRunner driver and Vue 3 frontend adapter.

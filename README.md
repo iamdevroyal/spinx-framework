@@ -45,11 +45,11 @@ Unlike frameworks where architectural structure is a loose suggestion in the doc
 
 ## 🚀 Quickstart & Installation
 
-Creating a new Spinx project requires a single Composer command with zero manual configuration steps:
+Creating a new Spinx project requires a single CLI command:
 
 ```bash
 # 1. Create a new Spinx project
-composer create-project spinx/spinx my-app
+spinx new my-app
 
 # 2. Enter project directory
 cd my-app
