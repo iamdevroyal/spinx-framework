@@ -151,9 +151,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => handleNavClick('framework', '/')}
             className="flex items-center gap-2.5 group focus:outline-none"
           >
-            <div className="w-7 h-7 rounded-full bg-[#E11D63] flex items-center justify-center font-mono-code font-extrabold text-white text-xs shadow-[0_0_12px_rgba(225,29,99,0.6)] group-hover:scale-105 transition-transform">
-              S
-            </div>
+            <img
+              src="/logo.png"
+              alt="Spinx Logo"
+              className="w-7 h-7 rounded-full object-cover shadow-[0_0_12px_rgba(225,29,99,0.6)] group-hover:scale-105 transition-transform"
+            />
             <span className="font-bold text-base md:text-lg tracking-tight text-white group-hover:text-[#ffb2bf] transition-colors">
               Spinx
             </span>
