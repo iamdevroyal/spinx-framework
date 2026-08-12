@@ -1,0 +1,6 @@
+{
+  "name": "Spinx",
+  "description": "Batteries included. Boundaries enforced. The performance-first PHP framework with architecture built in.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
