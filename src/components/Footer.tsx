@@ -18,6 +18,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDocs, onOpenPlayground }) 
       setTimeout(() => setSubscribed(false), 3000);
       setEmail('');
     }
+
   };
 
   return (
@@ -143,7 +144,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenDocs, onOpenPlayground }) 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] text-[#A1A1AA]">
           <div className="text-center md:text-left tracking-widest uppercase">
-            RELEASED UNDER THE BSD 3-CLAUSE LICENSE | COPYRIGHT © 2024 SPINX
+            RELEASED UNDER THE BSD 3-CLAUSE LICENSE | COPYRIGHT © {new Date().getFullYear()} SPINX
           </div>
           <div className="bg-[#111113] border border-white/10 rounded px-3 py-1 text-[#ffb2bf] select-all">
             spinx new spinx/spinx
