@@ -7,7 +7,7 @@ export interface DocHeading {
 export interface DocArticle {
   id: string;
   path: string;
-  category: 'Getting Started' | 'Core Concepts' | 'Backend & Services' | 'Frontend & Inertia' | 'API & Reference' | 'Guides & Examples';
+  category: 'Getting Started' | 'Core Concepts' | 'Backend & Services' | 'Frontend & Islands' | 'API & Reference' | 'Guides & Examples';
   title: string;
   subtitle: string;
   description: string;
@@ -40,7 +40,7 @@ export const DOC_CATEGORIES = [
   'Getting Started',
   'Core Concepts',
   'Backend & Services',
-  'Frontend & Inertia',
+  'Frontend & Islands',
   'API & Reference',
   'Guides & Examples',
 ] as const;
@@ -51,15 +51,15 @@ export const DOCS_DATA: DocArticle[] = [
     path: '/docs/introduction',
     category: 'Getting Started',
     title: 'Introduction to Spinx Framework',
-    subtitle: 'The modern PHP & Node hybrid engine for high-concurrency coroutines and DDD architecture.',
-    description: 'Spinx is a next-generation full-stack framework engineered for extreme performance, clean domain-driven architecture, and seamless single-page application hydration with Vue and React.',
+    subtitle: 'The modern PHP engine for high-concurrency coroutines, enforced DDD architecture, and reactive island hydration.',
+    description: 'Spinx is a next-generation full-stack PHP framework engineered for extreme performance, clean domain-driven architecture, and seamless island hydration with Vue and React.',
     readTime: '5 min read',
-    lastUpdated: 'Updated v1 (MVP)',
+    lastUpdated: 'v1.0.0 (Production Ready)',
     badge: 'Core Reference',
     headings: [
       { id: 'overview', title: 'Framework Overview', level: 2 },
       { id: 'core-pillars', title: 'Core Architecture Pillars', level: 2 },
-      { id: 'scope-non-goals', title: 'Scope & Non-Goals for v1', level: 2 },
+      { id: 'scope-non-goals', title: 'Scope & Architecture Guarantees', level: 2 },
       { id: 'positioning-matrix', title: 'Comparison & Positioning Matrix', level: 2 },
       { id: 'gotcha-mental-shift', title: 'What Could Go Wrong: Mental Shift', level: 2 },
     ],
@@ -67,25 +67,20 @@ export const DOCS_DATA: DocArticle[] = [
       {
         headingId: 'overview',
         headingTitle: 'Framework Overview',
-        content: `Spinx is a PHP framework for applications that don't need Laravel's full weight but demand near-Node.js performance, zero-friction cross-platform installation, and an enforced Domain-Driven Design (DDD) architecture from the first command run.
+        content: `Spinx is a PHP framework for applications that demand near-Node.js performance, zero-friction cross-platform installation, and an enforced Domain-Driven Design (DDD) architecture from the first command run.
 
-By bypassing traditional PHP-FPM per-request bootstrap overhead, Spinx hosts your application inside long-running coroutine execution workers. Route matching, container resolution, and configuration models remain warmed in RAM across requests, serving thousands of hits per second with microsecond latency.`,
+By eliminating traditional PHP-FPM per-request bootstrap overhead, Spinx hosts your application inside long-running execution workers (RoadRunner out of the box, Swoole coroutines opt-in). Route matching, container resolution, and database connections remain warmed in RAM across requests, serving thousands of requests per second with microsecond latency.`,
         codeSnippet: {
-          title: 'spinx.json - Unified Configuration Declaration',
+          title: 'spinx.json - Single Source of Truth',
           language: 'json',
           code: `{
+  "appName": "Spinx App",
   "driver": "roadrunner",
   "frontend": "vue",
-  "modules": ["Billing", "Auth", "Catalog"],
-  "database": {
-    "connection": "pgsql"
-  },
-  "migrations": {
-    "auto_run": true
-  },
-  "static_analysis": {
-    "level": 8,
-    "strict_types": true
+  "modules": {
+    "Health": true,
+    "Todo": true,
+    "Billing": true
   }
 }`,
         },
@@ -101,21 +96,21 @@ By bypassing traditional PHP-FPM per-request bootstrap overhead, Spinx hosts you
         content: `Spinx is built on five core technical pillars designed for long-term project maintainability and extreme throughput:
 
 1. Speed: Persistent-process runtime (RoadRunner default, Swoole opt-in) with no per-request bootstrap cost.
-2. Portability: Runs on Windows, Linux, and macOS with a single install step — no compiled extensions required by default.
+2. Portability: Runs on Windows, Linux, and macOS with a single install step — no compiled C extensions required by default.
 3. Enforced Architecture: DDD module layout is not an optional convention; it is structurally the only way the kernel registers code.
-4. Frontend-Agnostic, Vue-First: Inertia-driven page rendering with Vue 3 by default and React 19 as a swappable adapter.
-5. Native Reach: Built-in desktop/mobile previewer and a direct path to compile Spinx frontends into standalone native mobile shells.`,
+4. Island Hydration: Server-rendered HTML templates with targeted client-side hydration islands (@island) for Vue 3 and React 19.
+5. Native Reach: Built-in desktop and mobile previewers (spinx preview --mobile) and scaffolders for native Android and iOS shells.`,
       },
       {
         headingId: 'scope-non-goals',
-        headingTitle: 'Scope & Non-Goals for v1',
-        content: `To deliver a rock-solid, production-grade foundation, Spinx explicitly defines out-of-scope items for the v1 MVP release:
+        headingTitle: 'Scope & Architecture Guarantees',
+        content: `Spinx provides an integrated suite of framework subsystems designed for long-running runtimes:
 
-• Explicitly Out of Scope for v1:
-  - Full Doctrine ORM support (Doctrine's UnitOfWork model is incompatible with Swoole coroutines).
-  - On-device PHP runtime for offline mobile apps (deferred pending a standalone feasibility spike).
-  - Traditional shared-hosting or PHP-FPM deployment as a primary target.
-  - Non-Vue/React frontend adapters (Svelte/Angular deferred for post-v1).`,
+• Persistent Runtime Isolation: Single-boot kernel with RequestScope container tracking to eliminate memory leaks across requests.
+• DBAL-Based Active Record: Eloquent-shaped ergonomics with pre-compiled schema column caching, upsert support, and row locking.
+• Built-In Auth & Session: Stateful session management (File/Database) safe for persistent workers, with session-fixation protection.
+• In-Framework Scheduler: Cron expressions declared fluently in schedule.php, driven by a single OS cron entry.
+• Automatic OpenAPI: Reflection-based OpenAPI 3.1 schema generation from routes and PHP 8 attributes.`,
       },
       {
         headingId: 'positioning-matrix',
@@ -124,21 +119,20 @@ By bypassing traditional PHP-FPM per-request bootstrap overhead, Spinx hosts you
         tableData: {
           headers: ['Framework', 'Good at', 'Spinx Difference'],
           rows: [
-            ['Laravel', 'Batteries-included web apps, mature ecosystem, Eloquent ORM', 'Enforces DDD modules at kernel level; defaults to persistent worker runtime over PHP-FPM'],
-            ['Symfony', 'Minimal-app style, routing, extension composition', 'Broader first-party product for validation, DI, auth, records, queues, scheduler, and testing out of the box'],
-            ['Slim / Lumen', 'Lightweight micro-APIs, minimal footprint', 'Trades raw minimalism for enforced DDD architecture, persistent performance, and full frontend hydration'],
-            ['CodeIgniter', 'Low-overhead web apps and legacy sites', 'Modern product architecture with coroutine/worker-safe state isolation from day one'],
+            ['Laravel', 'Batteries-included web apps, mature ecosystem, Eloquent ORM', 'Enforces DDD modules at kernel level; defaults to persistent worker runtime over PHP-FPM with zero-drift state safety'],
+            ['Symfony', 'Enterprise components, HTTP kernel, DI flexibility', 'Full opinionated full-stack framework with out-of-the-box auth, records, queues, scheduler, and Vite islands'],
+            ['Slim / Lumen', 'Lightweight micro-APIs, minimal footprint', 'Full-featured architecture with DDD boundaries, persistent performance, and interactive mobile preview tools'],
           ],
         },
       },
       {
         headingId: 'gotcha-mental-shift',
         headingTitle: 'What Could Go Wrong: Mental Shift',
-        content: `Teams sometimes reach for Spinx expecting a drop-in Laravel replacement. It isn't — the enforced module system means code that "just works" in a loosely structured Laravel app will be rejected by Spinx's autodiscovery until it is placed inside a proper module. Budget time for this mental shift, not just a migration script.`,
+        content: `The enforced module system means code that "just works" in a loosely structured app will not be discovered by Spinx until placed inside a valid module under app/Modules/<Name>/module.php. Budget time for this architectural discipline.`,
         callout: {
           type: 'warning',
           title: 'What Could Go Wrong',
-          message: 'Autodiscovery requires code to live inside an active module under app/Modules/<ModuleName>. Placing loose controllers in app/Controllers will result in 404 routes during kernel boot.',
+          message: 'Autodiscovery requires code to live inside an active module. Placing loose controllers in app/Controllers will result in 404 routes during kernel boot.',
         },
       },
     ],
@@ -164,7 +158,7 @@ By bypassing traditional PHP-FPM per-request bootstrap overhead, Spinx hosts you
       {
         headingId: 'installation-steps',
         headingTitle: 'Standard Installation',
-        content: `Spinx projects are created using the \`spinx new\` CLI command. The install path requires zero manual steps beyond a single terminal command:`,
+        content: `Spinx projects are created using the \`spinx new\` CLI command:`,
         codeSnippet: {
           title: 'Terminal - Project Initialization',
           language: 'bash',
@@ -178,17 +172,17 @@ spinx serve`,
         headingTitle: 'What the Installer Automates',
         content: `When you execute \`spinx new my-app\`, Spinx's scaffolding engine automatically:
 1. Detects host OS and CPU architecture (Windows x64, macOS ARM64/x64, Linux x64).
-2. Downloads the matching RoadRunner binary into the local bin directory — eliminating compiled PECL C extensions for default installs.
-3. Scaffolds a complete \`spinx.json\` file pre-configured with RoadRunner driver and Vue 3 frontend adapter.
-4. Generates an initial DDD module skeleton (\`app/Modules/Core\`).`,
+2. Downloads the matching RoadRunner binary into the project directory — eliminating compiled PECL C extensions for default installs.
+3. Scaffolds a complete \`spinx.json\` pre-configured with RoadRunner and Vue 3 frontend adapter.
+4. Generates an initial reference module skeleton (\`app/Modules/Health\`).`,
       },
       {
         headingId: 'system-requirements',
         headingTitle: 'System Requirements',
         content: `• PHP 8.2 or newer (Spinx uses typed properties, readonly properties, and enums throughout its kernel).
-• Node.js 18+ and npm/pnpm for the Vite asset pipeline.
-• No compiled PHP C extensions required for the default RoadRunner runtime.
-• Swoole / OpenSwoole PECL extension only if explicitly opting into the Swoole driver path (documented for Linux/Docker deployments).`,
+• ext-mbstring extension for UTF-8 string validation.
+• Node.js 18+ and npm/pnpm for the Vite frontend pipeline.
+• No compiled PHP C extensions required for the default RoadRunner runtime.`,
         callout: {
           type: 'tip',
           title: 'PHP 8.2+ Modern Typing',
@@ -198,14 +192,14 @@ spinx serve`,
       {
         headingId: 'running-dev-server',
         headingTitle: 'Running the Dev Server',
-        content: `Executing \`spinx serve\` boots both the backend persistent worker runtime (RoadRunner/Swoole) and the Vite frontend dev server concurrently. Both processes are unified behind a single local HTTP proxy port.
+        content: `Executing \`spinx serve\` boots both the backend persistent worker runtime (RoadRunner/Swoole) and the Vite frontend dev server concurrently.
 
-Frontend edits trigger Instant Hot Module Replacement (HMR). Backend controller or route edits trigger automatic worker pool reloading without dropping active browser connections.`,
+Frontend edits trigger Instant Hot Module Replacement (HMR). Backend controller or route edits trigger automatic worker pool reloading.`,
       },
       {
         headingId: 'gotcha-windows-swoole',
         headingTitle: 'What Could Go Wrong: Windows & Swoole',
-        content: `The Swoole driver is not supported natively on Windows operating systems. If your engineering team develops on Windows laptops and plans to deploy on Swoole in production, use the official Spinx Docker image for local development. This prevents debugging OS-specific behavior differences for the first time in production.`,
+        content: `The Swoole driver is not supported natively on Windows. For local Windows development, use the default RoadRunner driver or the official Spinx Docker container if targeting Swoole in production.`,
         callout: {
           type: 'warning',
           title: 'What Could Go Wrong',
@@ -230,13 +224,12 @@ Frontend edits trigger Instant Hot Module Replacement (HMR). Backend controller 
       { id: 'swoole-adapter', title: 'SwooleAdapter (Opt-In Coroutines)', level: 2 },
       { id: 'kernel-lifecycle', title: 'Kernel Boot & Request Lifecycle', level: 2 },
       { id: 'state-safety-layer', title: 'State Safety Layer & RequestScope', level: 2 },
-      { id: 'gotcha-state-leaks', title: 'What Could Go Wrong: Cross-Request Leaks', level: 2 },
     ],
     sections: [
       {
         headingId: 'adapter-contract',
         headingTitle: 'The ServerAdapter Contract',
-        content: `All application code interacts with Symfony's \`HttpFoundation\` Request/Response objects exclusively. Every Spinx runtime driver implements the unified \`ServerAdapter\` interface, guaranteeing that swapping runtime engines never breaks application code.`,
+        content: `All application code interacts with Symfony's \`HttpFoundation\` Request and Response objects. Every Spinx runtime driver implements the unified \`ServerAdapter\` interface, guaranteeing that swapping runtime engines never breaks application code.`,
         codeSnippet: {
           title: 'Spinx/Runtime/ServerAdapter.php',
           language: 'php',
@@ -255,156 +248,35 @@ interface ServerAdapter
       {
         headingId: 'roadrunner-adapter',
         headingTitle: 'RoadRunnerAdapter (Default)',
-        content: `• Ships out-of-the-box with zero C extension compilation.
-• Handles concurrency via a pool of persistent PHP worker processes managed by a Go supervisor binary.
-• Runs natively on Windows, macOS, and Linux.
-• Each worker process executes standard synchronous PHP code — existing Composer packages work seamlessly without coroutine rewrite risks.`,
+        content: `RoadRunner uses a high-performance Go process supervisor that dispatches incoming HTTP requests over Unix sockets or named pipes to worker PHP processes. Each worker handles one request at a time sequentially.`,
       },
       {
         headingId: 'swoole-adapter',
         headingTitle: 'SwooleAdapter (Opt-In Coroutines)',
-        content: `Activated via \`spinx.json\` (\`"driver": "swoole"\`). Provides true event-loop coroutine concurrency closest to Node.js. Requires the Swoole/OpenSwoole PECL C extension and is shipped alongside an official Linux Docker image.`,
-        codeSnippet: {
-          title: 'Terminal - Swapping Runtime Drivers',
-          language: 'bash',
-          code: `spinx driver:swap swoole`,
-        },
+        content: `Swoole runs as a C extension within PHP, multiplexing concurrent requests within a single process via coroutines. Spinx provides coroutine-safe connection pooling to prevent socket corruption.`,
       },
       {
         headingId: 'kernel-lifecycle',
         headingTitle: 'Kernel Boot & Request Lifecycle',
-        content: `The Spinx kernel boots ONCE per worker process initialization, NOT per incoming request:
-
-1. Compiles the Symfony Dependency Injection container and caches it to disk.
-2. Loads and compiles module route definitions into a static array cache.
-3. Registers module service providers and events.
-4. Instantiates a Request-Scoped Child Container fresh for each HTTP request, holding request-specific state that is discarded immediately after response flush.`,
-        codeSnippet: {
-          title: 'bootstrap/app.php - Kernel Hooks',
-          language: 'php',
-          code: `$app = SpinxApp::boot();
-
-$app->onRequest(function (Request $request) {
-    // Executes at the start of every request before routing
-});
-
-$app->onShutdown(function () {
-    // Executes when worker process is gracefully draining
-});
-
-$app->run();`,
-        },
+        content: `Kernel::boot() runs once at worker process startup:
+1. Loads environment variables (.env).
+2. Boots configuration store (\`Spinx\\Support\\Config\`).
+3. Compiles the Symfony DI container and warms cache to disk.
+4. Initializes DBAL connection managers and boots the pre-compiled SchemaCache.
+5. Boots Auth and Session subsystems.
+6. Compiles all module routes into a single Symfony RouteCollection.`,
       },
       {
         headingId: 'state-safety-layer',
         headingTitle: 'State Safety Layer & RequestScope',
-        content: `Reusing RAM across requests poses the risk of state leakage (e.g. User A seeing User B's session). Spinx solves this at the engine level:
-
-1. Static Analysis Rule: A custom PHPStan/Psalm rule flags any static property or singleton holding mutable request data.
-2. RequestScope Container Wrapper: Automatically resets request-scoped services at response completion.
-3. Safe-by-Default Generators: All CLI generators (\`spinx make:service\`) create request-scoped bindings by default. Singletons require explicit opt-in (\`--singleton\`).`,
+        content: `To ensure zero state leakage between requests in persistent workers:
+• RequestScope automatically resets tagged module services between requests.
+• The PHPStan \`NoMutableStaticStateRule\` flags mutable static properties at build time.`,
         codeSnippet: {
-          title: 'app/Security/CurrentUser.php - Scoped Binding',
-          language: 'php',
-          code: `final class CurrentUser
-{
-    // Bound request-scoped: fresh instance per request, discarded after.
-}
-
-$app->bind(CurrentUser::class)->requestScoped();`,
-        },
-      },
-      {
-        headingId: 'gotcha-state-leaks',
-        headingTitle: 'What Could Go Wrong: Cross-Request Leaks',
-        content: `Anything resolved from the app-level container (instead of the request-scoped container) persists for the life of the worker process — potentially thousands of requests. Binding request-specific data (e.g., current user, request ID) at the app level instead of the request scope is the single most common source of cross-request leaks.`,
-        callout: {
-          type: 'warning',
-          title: 'What Could Go Wrong',
-          message: 'Never bind current User or Request parameters as Singleton dependencies. Always resolve them via requestScoped() or pass them explicitly to method signatures.',
-        },
-      },
-    ],
-  },
-  {
-    id: 'configuration',
-    path: '/docs/configuration',
-    category: 'Core Concepts',
-    title: 'Unified Configuration (spinx.json)',
-    subtitle: 'Single source of truth for runtime driver, frontend adapter, modules, and database.',
-    description: 'Learn how spinx.json centralizes all framework layers, environment variables, driver swapping, and build settings.',
-    readTime: '4 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'Configuration',
-    headings: [
-      { id: 'json-schema', title: 'spinx.json Schema Reference', level: 2 },
-      { id: 'driver-swapping', title: 'Driver Swapping Mechanics', level: 2 },
-      { id: 'env-variables', title: 'Environment Variables (.env)', level: 2 },
-      { id: 'gotcha-driver-conformance', title: 'What Could Go Wrong: Driver Conformance', level: 2 },
-    ],
-    sections: [
-      {
-        headingId: 'json-schema',
-        headingTitle: 'spinx.json Schema Reference',
-        content: `In Spinx, \`spinx.json\` is the single source of truth for the entire application stack. Modifying drivers or frontend frameworks is a simple config change, never a codebase refactor.`,
-        codeSnippet: {
-          title: 'spinx.json',
-          language: 'json',
-          code: `{
-  "name": "spinx-application",
-  "version": "1.0.0",
-  "driver": "roadrunner",
-  "frontend": "vue",
-  "modules": [
-    "Billing",
-    "Auth",
-    "Catalog"
-  ],
-  "database": {
-    "connection": "pgsql",
-    "pool": {
-      "min": 5,
-      "max": 50
-    }
-  },
-  "migrations": {
-    "auto_run": true
-  },
-  "static_analysis": {
-    "level": 8,
-    "strict_types": true
-  }
-}`,
-        },
-      },
-      {
-        headingId: 'driver-swapping',
-        headingTitle: 'Driver Swapping Mechanics',
-        content: `You can switch between RoadRunner and Swoole runtime drivers instantly with:`,
-        codeSnippet: {
-          title: 'Terminal - Swap Driver',
+          title: 'PHPStan Leak Check',
           language: 'bash',
-          code: `spinx driver:swap swoole`,
-        },
-        callout: {
-          type: 'note',
-          title: 'Conformance Guarantee',
-          message: 'Both adapters pass an identical conformance test suite ensuring identical Request/Response and middleware pipeline behavior.',
-        },
-      },
-      {
-        headingId: 'env-variables',
-        headingTitle: 'Environment Variables (.env)',
-        content: `Sensitive credentials and environment-specific parameters are loaded from \`.env\` at boot time. Because environment variables are immutable during long-running worker execution, changing \`.env\` values in production requires issuing a worker reload: \`spinx reload\`.`,
-      },
-      {
-        headingId: 'gotcha-driver-conformance',
-        headingTitle: 'What Could Go Wrong: Driver Conformance',
-        content: `Swoole's coroutine model requires all blocking I/O calls in the request path to be coroutine-aware. A blocking third-party C extension or legacy PHP package under Swoole can freeze the entire worker thread. Verify third-party packages before switching to Swoole in production.`,
-        callout: {
-          type: 'warning',
-          title: 'What Could Go Wrong',
-          message: 'Third-party blocking HTTP clients (e.g. legacy cURL calls) will block Swoole worker threads. Use Spinx coroutine-safe HTTP client wrappers instead.',
+          code: `vendor/bin/phpstan analyse
+✔ [NoMutableStaticStateRule] 0 state leaks across persistent worker pool`,
         },
       },
     ],
@@ -422,7 +294,7 @@ $app->bind(CurrentUser::class)->requestScoped();`,
     headings: [
       { id: 'module-scaffold', title: 'Module Directory Structure', level: 2 },
       { id: 'kernel-enforced-rules', title: 'Kernel Enforced DDD Rules', level: 2 },
-      { id: 'module-registry', title: 'Module Registry & Feature Toggling', level: 2 },
+      { id: 'module-definition', title: 'The module.php Definition File', level: 2 },
       { id: 'gotcha-layer-violations', title: 'What Could Go Wrong: Layer Violations', level: 2 },
     ],
     sections: [
@@ -450,43 +322,59 @@ app/Modules/Billing/
 │   └── Repositories/        (interfaces only)
 ├── Application/
 │   ├── Services/
-│   └── Commands|Queries/
+│   └── Jobs/
 ├── Infrastructure/
 │   ├── Repositories/        (concrete implementations)
 │   ├── Http/
 │   │   ├── Controllers/
 │   │   └── Middleware/
 │   └── Persistence/
+│       ├── Models/
 │       └── Migrations/
-└── module.php                ← registers routes, DI bindings, migrations
+└── module.php                ← registers aliases, routes, services
 \`\`\`
 
 • Kernel Enforced Rules:
 1. Controllers must live exclusively under \`Infrastructure/Http/Controllers\`.
 2. The \`Domain\` layer must have ZERO dependencies on \`Infrastructure\` or \`Application\` layers.
-3. Repository interfaces belong in \`Domain/Repositories\`; concrete classes live in \`Infrastructure/Repositories\`.
-4. Modules own their schema migrations independently (\`spinx module:migrate Billing\`).`,
+3. Repository interfaces belong in \`Domain/Repositories\`; concrete classes live in \`Infrastructure/Repositories\`.`,
       },
       {
-        headingId: 'module-registry',
-        headingTitle: 'Module Registry & Feature Toggling',
-        content: `The \`modules\` key in \`spinx.json\` controls which modules are compiled at boot. Disabling a module is as simple as removing it from the array, making feature-flagging or commercial module gating seamless.`,
+        headingId: 'module-definition',
+        headingTitle: 'The module.php Definition File',
+        content: `Every module defines its controllers, middlewares, routes, and services in \`module.php\`:`,
         codeSnippet: {
-          title: 'spinx.json - Active Modules',
-          language: 'json',
-          code: `{
-  "modules": [
-    "Billing",
-    "Auth",
-    "Catalog"
-  ]
-}`,
+          title: 'app/Modules/Billing/module.php',
+          language: 'php',
+          code: `use App\\Modules\\Billing\\Infrastructure\\Http\\Controllers\\InvoiceController;
+use Spinx\\Auth\\Middleware\\AuthMiddleware;
+use Spinx\\Routing\\{AliasRegistry, Route, RouteBuilder};
+use Symfony\\Component\\DependencyInjection\\ContainerBuilder;
+
+return [
+    'controllers' => static function (AliasRegistry $r): void {
+        $r->registerController('invoice_show', InvoiceController::class);
+    },
+    'middlewares' => static function (AliasRegistry $r): void {
+        $r->registerMiddleware('auth', AuthMiddleware::class);
+    },
+    'routes' => static function (RouteBuilder $routes): void {
+        Route::get(['invoices.show', '/invoices/{id}'])
+            ->middleware(['auth'])
+            ->controller('invoice_show');
+    },
+    'services' => static function (ContainerBuilder $c, string $dir): void {
+        $c->register(InvoiceRepositoryInterface::class, InvoiceRepository::class)
+            ->setAutowired(true)
+            ->setPublic(true);
+    },
+];`,
         },
       },
       {
         headingId: 'gotcha-layer-violations',
         headingTitle: 'What Could Go Wrong: Layer Violations',
-        content: `A common early mistake is putting a repository interface under \`Infrastructure\` because "that's where the concrete class will live too." The static analysis rule will fail the build — interfaces belong in \`Domain/Repositories\`, only implementations belong in \`Infrastructure/Repositories\`.`,
+        content: `Repository interfaces belong in \`Domain/Repositories\`, while implementations belong in \`Infrastructure/Repositories\`. The static analysis rule will reject builds that violate layer boundaries.`,
         callout: {
           type: 'warning',
           title: 'What Could Go Wrong',
@@ -496,97 +384,86 @@ app/Modules/Billing/
     ],
   },
   {
-    id: 'routing-gates',
-    path: '/docs/routing-gates',
-    category: 'Backend & Services',
-    title: 'Routing, Requests, Auth & Security',
-    subtitle: 'Declarative route gates, immutable HTTP objects, and OpenAPI generation.',
-    description: 'Learn module route registration, middleware binding, DTO request validation, and built-in security features.',
+    id: 'routing',
+    path: '/docs/routing',
+    category: 'Core Concepts',
+    title: 'Fluent Routing DSL & Middlewares',
+    subtitle: 'Expressive route definitions, string alias resolution, and middleware pipelines.',
+    description: 'Learn how to use Spinx\'s fluent Route DSL, register controller and middleware aliases, and create nested route groups.',
     readTime: '6 min read',
     lastUpdated: 'Updated v1',
-    badge: 'Security & HTTP',
+    badge: 'Routing',
     headings: [
-      { id: 'route-declarations', title: 'Module Route Declarations', level: 2 },
-      { id: 'request-response-handling', title: 'Request & Response Handling', level: 2 },
-      { id: 'middleware-auth-gates', title: 'Declarative Auth Gates & Middleware', level: 2 },
-      { id: 'dto-validation', title: 'Request DTO Validation', level: 2 },
-      { id: 'gotcha-route-mutations', title: 'What Could Go Wrong: Dynamic Route Drift', level: 2 },
+      { id: 'fluent-dsl', title: 'Fluent Route DSL', level: 2 },
+      { id: 'route-groups', title: 'Nested Route Groups & Prefixes', level: 2 },
+      { id: 'alias-system', title: 'Controller & Middleware Alias System', level: 2 },
+      { id: 'middleware-pipeline', title: 'Middleware Execution Pipeline', level: 2 },
     ],
     sections: [
       {
-        headingId: 'route-declarations',
-        headingTitle: 'Module Route Declarations',
-        content: `Routes are declared per module in \`module.php\` and bound directly to controllers in that module's \`Infrastructure/Http/Controllers\` directory:`,
+        headingId: 'fluent-dsl',
+        headingTitle: 'Fluent Route DSL',
+        content: `Spinx features an expressive, fluent routing DSL that compiles down to Symfony's high-speed RouteCollection at boot time:`,
         codeSnippet: {
-          title: 'app/Modules/Billing/module.php',
+          title: 'Fluent Route Definition',
           language: 'php',
-          code: `use App\\Modules\\Billing\\Infrastructure\\Http\\Controllers\\InvoiceController;
-use Spinx\\Routing\\Route;
+          code: `use Spinx\\Routing\\Route;
 
-Route::get('/invoices/{invoiceId}', [InvoiceController::class, 'show']);
+Route::get(['orders.index', '/orders'])
+    ->middleware(['auth'])
+    ->controller('order_list');
 
-Route::post('/invoices', [InvoiceController::class, 'store'])
-    ->middleware('auth:session');`,
+Route::post(['orders.create', '/orders'])
+    ->middleware(['auth', 'csrf'])
+    ->controller('order_create');`,
         },
       },
       {
-        headingId: 'request-response-handling',
-        headingTitle: 'Request & Response Handling',
-        content: `All application code interacts with Symfony's \`HttpFoundation\` objects. Handlers receive \`Request\`, \`Response\` — with validated parameters and dependencies injected automatically:`,
+        headingId: 'route-groups',
+        headingTitle: 'Nested Route Groups & Prefixes',
+        content: `Group routes under a shared URL prefix using \`Route::group()\`:`,
         codeSnippet: {
-          title: 'InvoiceController.php',
+          title: 'Route Grouping Example',
           language: 'php',
-          code: `public function show(Request $request, string $invoiceId): Response
+          code: `Route::group('/api/v1', function (RouteBuilder $group): void {
+    Route::get(['users.list', '/users'])->controller('user_list');
+    Route::get(['users.show', '/users/{id}'])->controller('user_show');
+});`,
+        },
+      },
+      {
+        headingId: 'alias-system',
+        headingTitle: 'Controller & Middleware Alias System',
+        content: `String aliases decouple route declarations from fully qualified class names. Aliases registered in \`controllers\` and \`middlewares\` closures are automatically registered in the Symfony DI container:`,
+        codeSnippet: {
+          title: 'Alias Registration in module.php',
+          language: 'php',
+          code: `'controllers' => static function (AliasRegistry $r): void {
+    $r->registerController('order_list', OrderListController::class);
+},
+'middlewares' => static function (AliasRegistry $r): void {
+    $r->registerMiddleware('auth', AuthMiddleware::class);
+    $r->registerMiddleware('rate_limit', RateLimitMiddleware::class);
+},`,
+        },
+      },
+      {
+        headingId: 'middleware-pipeline',
+        headingTitle: 'Middleware Execution Pipeline',
+        content: `Middlewares implement a simple process() signature wrapping the request:`,
+        codeSnippet: {
+          title: 'Middleware Example',
+          language: 'php',
+          code: `final class CustomMiddleware
 {
-    return Response::json([
-        'invoice_id' => $invoiceId,
-        'status' => 'paid',
-    ]);
+    public function process(Request $request, \\Closure $next): Response
+    {
+        // Pre-handler logic
+        $response = $next($request);
+        // Post-handler logic
+        return $response;
+    }
 }`,
-        },
-      },
-      {
-        headingId: 'middleware-auth-gates',
-        headingTitle: 'Declarative Auth Gates & Middleware',
-        content: `Auth gates are declared on the route and documented in the same place as the route definition. Session- and token-based guards are supported behind the same \`auth:*\` syntax, configured in \`spinx.json\` and resolved via the request-scoped container so user state never leaks.`,
-        codeSnippet: {
-          title: 'Route Auth Gate',
-          language: 'php',
-          code: `Route::post('/v1/billing/invoices', [InvoiceController::class, 'store'])
-    ->middleware('auth:jwt')
-    ->openapi(summary: "Create billing invoice");`,
-        },
-      },
-      {
-        headingId: 'dto-validation',
-        headingTitle: 'Request DTO Validation',
-        content: `Request DTOs validate incoming payload data at the controller boundary — a handler never runs against unvalidated input:`,
-        codeSnippet: {
-          title: 'CreateInvoiceRequest.php',
-          language: 'php',
-          code: `final class CreateInvoiceRequest
-{
-    public function __construct(
-        public readonly string $customerId,
-        public readonly int $amountCents,
-    ) {}
-}
-
-// Controller Signature:
-public function store(Request $request, CreateInvoiceRequest $data): Response
-{
-    // $data is guaranteed valid and typed by the time this executes
-}`,
-        },
-      },
-      {
-        headingId: 'gotcha-route-mutations',
-        headingTitle: 'What Could Go Wrong: Dynamic Route Drift',
-        content: `Routes are compiled ONCE at kernel boot. Attempting to register dynamic routes inside a controller or request handler during execution will fail — route definitions are immutable after boot to prevent race conditions across long-lived workers.`,
-        callout: {
-          type: 'warning',
-          title: 'What Could Go Wrong',
-          message: 'Never attempt to call Route::get() inside a controller or middleware. Declare all route paths in module.php.',
         },
       },
     ],
@@ -595,65 +472,265 @@ public function store(Request $request, CreateInvoiceRequest $data): Response
     id: 'database-orm',
     path: '/docs/database-orm',
     category: 'Backend & Services',
-    title: 'Data Layer (ORM) & Dependency Injection',
-    subtitle: 'Symfony DBAL foundation with coroutine-safe connection pooling and DI resolution.',
-    description: 'Learn how Spinx implements a fluent, coroutine-safe ORM on DBAL, along with request-scoped DI service binding.',
+    title: 'Database, Active Record ORM & Schema Cache',
+    subtitle: 'Symfony DBAL foundation with coroutine-safe pooling, schema caching, and atomic operations.',
+    description: 'Learn how Spinx implements a fluent active-record ORM on DBAL with pre-compiled schema caching, upserts, and row locking.',
     readTime: '7 min read',
     lastUpdated: 'Updated v1',
-    badge: 'Database & DI',
+    badge: 'Database & ORM',
     headings: [
-      { id: 'dbal-foundation', title: 'DBAL Foundation (Why Not Doctrine?)', level: 2 },
-      { id: 'query-builder-relations', title: 'Query Builder & Relationships', level: 2 },
-      { id: 'coroutine-pooling', title: 'Coroutine & Worker Connection Pooling', level: 2 },
-      { id: 'di-service-bindings', title: 'Dependency Injection Bindings', level: 2 },
-      { id: 'gotcha-orm-leak', title: 'What Could Go Wrong: Cached Record Instances', level: 2 },
+      { id: 'dbal-foundation', title: 'DBAL 4 Foundation & Connection Pooling', level: 2 },
+      { id: 'schema-cache', title: 'Pre-Compiled Schema Cache (spinx schema:compile)', level: 2 },
+      { id: 'column-selection', title: 'Column Selection (selectWith & selectWithout)', level: 2 },
+      { id: 'conditional-queries', title: 'Conditional Queries (when/then/else)', level: 2 },
+      { id: 'atomic-upsert', title: 'Atomic Upserts & SELECT FOR UPDATE', level: 2 },
+      { id: 'db-facade', title: 'The DB Static Façade & Transactions', level: 2 },
     ],
     sections: [
       {
         headingId: 'dbal-foundation',
-        headingTitle: 'DBAL Foundation (Why Not Doctrine?)',
-        content: `Spinx's ORM is built on Symfony DBAL, explicitly NOT full Doctrine ORM. Doctrine's UnitOfWork / proxy model is not coroutine-safe, which conflicts with Swoole execution. Spinx provides an Eloquent-shaped API directly over DBAL's connection and schema abstraction.`,
+        headingTitle: 'DBAL 4 Foundation & Connection Pooling',
+        content: `Spinx ORM is built on Doctrine DBAL 4. Connection pooling is managed automatically per runtime driver — persistent single connections for RoadRunner, and coroutine-aware checkout/release pools for Swoole.`,
       },
       {
-        headingId: 'query-builder-relations',
-        headingTitle: 'Query Builder & Relationships',
-        content: `Spinx ORM provides expressive fluent queries and relation mapping (\`hasOne\`, \`hasMany\`, \`belongsTo\`, \`belongsToMany\`, polymorphic):`,
+        headingId: 'schema-cache',
+        headingTitle: 'Pre-Compiled Schema Cache (spinx schema:compile)',
+        content: `Running \`spinx schema:compile\` inspects table schemas via DBAL 4 and writes an immutable column mapping file into \`storage/cache/schema_columns.php\`. The Kernel loads this file into OpCache at boot — zero runtime DB schema queries!`,
         codeSnippet: {
-          title: 'Invoice Query Example',
-          language: 'php',
-          code: `Invoice::where('status', 'unpaid')
-    ->whereIn('customer_id', $customerIds)
-    ->with('customer')
-    ->orderBy('created_at', 'desc')
-    ->paginate(25);`,
+          title: 'Terminal - Compile Schema Cache',
+          language: 'bash',
+          code: `spinx schema:compile
+# Output: [Spinx] Schema compiled → storage/cache/schema_columns.php`,
         },
       },
       {
-        headingId: 'coroutine-pooling',
-        headingTitle: 'Coroutine & Worker Connection Pooling',
-        content: `Connection pooling is handled per runtime adapter:
-• RoadRunner: A connection is reused per worker process and reset between requests.
-• Swoole: A coroutine-aware pool checks connections out and in per coroutine, preventing cross-coroutine socket sharing.`,
-      },
-      {
-        headingId: 'di-service-bindings',
-        headingTitle: 'Dependency Injection Bindings',
-        content: `Services are registered in \`module.php\` and resolved via the request-scoped child container:`,
+        headingId: 'column-selection',
+        headingTitle: 'Column Selection (selectWith & selectWithout)',
+        content: `Select specific columns or omit sensitive columns using pre-compiled schema introspection:`,
         codeSnippet: {
-          title: 'app/Modules/Billing/module.php',
+          title: 'Column Filtering Example',
           language: 'php',
-          code: `$app->bind(InvoiceRepository::class, EloquentInvoiceRepository::class);
-$app->bind(InvoiceService::class)->requestScoped();`,
+          code: `// Select all columns except sensitive credentials:
+$users = User::query()
+    ->selectWithout('password', 'remember_token')
+    ->get();
+
+// Select strictly required fields:
+$titles = User::query()
+    ->selectWith('id', 'name', 'email')
+    ->get();`,
         },
       },
       {
-        headingId: 'gotcha-orm-leak',
-        headingTitle: 'What Could Go Wrong: Cached Record Instances',
-        content: `Holding a \`Record\` instance (or its underlying DB connection) as a property on a singleton service is the fastest way to leak database state across requests. Always resolve models fresh within the request scope — never cache a model instance at the app level.`,
-        callout: {
-          type: 'warning',
-          title: 'What Could Go Wrong',
-          message: 'Never store active Record or Entity instances inside singleton class properties. Always query models within request-scoped handlers.',
+        headingId: 'conditional-queries',
+        headingTitle: 'Conditional Queries (when/then/else)',
+        content: `Construct queries conditionally using fluent \`when()\`, \`then()\`, and \`else()\` / \`otherwise()\` clauses:`,
+        codeSnippet: {
+          title: 'Conditional Query Example',
+          language: 'php',
+          code: `$orders = Order::query()
+    ->where('status', 'active')
+    ->when($isAdmin)
+        ->then(fn($q) => $q->where('include_internal', true))
+        ->else(fn($q) => $q->where('is_public', true))
+    ->get();`,
+        },
+      },
+      {
+        headingId: 'atomic-upsert',
+        headingTitle: 'Atomic Upserts & SELECT FOR UPDATE',
+        content: `Execute platform-aware atomic upserts and transaction row-locking:`,
+        codeSnippet: {
+          title: 'Upsert & Atomic Locking Example',
+          language: 'php',
+          code: `// Platform-aware atomic upsert (PostgreSQL/SQLite ON CONFLICT, MySQL ON DUPLICATE KEY):
+User::upsert(
+    values: ['id' => 1, 'email' => 'user@example.com', 'login_count' => 5],
+    uniqueColumns: ['id'],
+    updateColumns: ['login_count']
+);
+
+// Row lock inside transaction (SELECT FOR UPDATE):
+Order::atomic($orderId, function (Order $order): void {
+    $order->update(['status' => 'processing']);
+});`,
+        },
+      },
+      {
+        headingId: 'db-facade',
+        headingTitle: 'The DB Static Façade & Transactions',
+        content: `For raw SQL queries, transactions, and reporting:`,
+        codeSnippet: {
+          title: 'DB Façade Example',
+          language: 'php',
+          code: `use Spinx\\Database\\DB;
+
+DB::transaction(function ($conn): void {
+    DB::statement('UPDATE accounts SET balance = balance - 100 WHERE id = :id', ['id' => 1]);
+    DB::statement('UPDATE accounts SET balance = balance + 100 WHERE id = :id', ['id' => 2]);
+});
+
+$rows = DB::select('SELECT id, name FROM users WHERE active = :a', ['a' => 1]);`,
+        },
+      },
+    ],
+  },
+  {
+    id: 'auth',
+    path: '/docs/auth',
+    category: 'Backend & Services',
+    title: 'Authentication & Session Subsystem',
+    subtitle: 'Stateless-safe session management, user providers, and route guard middlewares.',
+    description: 'Explore Spinx\'s built-in Auth façade, File and Database session drivers, password hashing, and middleware aliases.',
+    readTime: '6 min read',
+    lastUpdated: 'Updated v1',
+    badge: 'Auth & Security',
+    headings: [
+      { id: 'session-architecture', title: 'Persistent-Worker Session Architecture', level: 2 },
+      { id: 'auth-facade', title: 'The Auth Façade & UserProvider', level: 2 },
+      { id: 'password-hashing', title: 'Bcrypt Password Hashing (Hash::make)', level: 2 },
+      { id: 'auth-middlewares', title: 'Route Middlewares (auth & guest)', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'session-architecture',
+        headingTitle: 'Persistent-Worker Session Architecture',
+        content: `Traditional $_SESSION global variables are dangerous in persistent runtimes (RoadRunner/Swoole) because they leak across requests.
+
+Spinx provides an isolated \`SessionInterface\` hydrated at request start from cookie tokens and persisted at response end. Drivers include \`FileSession\` (JSON files in \`storage/sessions\`) and \`DatabaseSession\` (\`spinx_sessions\` table).`,
+      },
+      {
+        headingId: 'auth-facade',
+        headingTitle: 'The Auth Façade & UserProvider',
+        content: `Authenticate users cleanly via the static \`Auth\` façade:`,
+        codeSnippet: {
+          title: 'Auth Controller Example',
+          language: 'php',
+          code: `use Spinx\\Auth\\Auth;
+
+// Attempt login (regenerates session ID to prevent fixation attacks):
+if (Auth::attempt(['email' => $email, 'password' => $password])) {
+    $user = Auth::user();
+    return new JsonResponse(['user_id' => Auth::id()]);
+}
+
+// Check state:
+if (Auth::check()) {
+    // Authenticated
+}
+
+Auth::logout();`,
+        },
+      },
+      {
+        headingId: 'password-hashing',
+        headingTitle: 'Bcrypt Password Hashing (Hash::make)',
+        content: `Predictable 60-character bcrypt hashing:`,
+        codeSnippet: {
+          title: 'Hash Helper Example',
+          language: 'php',
+          code: `use Spinx\\Auth\\Hash;
+
+$hash = Hash::make('secret_password', cost: 12);
+$isValid = Hash::check('secret_password', $hash);`,
+        },
+      },
+      {
+        headingId: 'auth-middlewares',
+        headingTitle: 'Route Middlewares (auth & guest)',
+        content: `Protect routes with the built-in middleware aliases:`,
+        codeSnippet: {
+          title: 'Route Auth Middleware',
+          language: 'php',
+          code: `// Protected route:
+Route::get(['dashboard', '/dashboard'])
+    ->middleware(['auth'])
+    ->controller('dashboard_controller');
+
+// Guest-only route (redirects authenticated users away):
+Route::get(['login', '/login'])
+    ->middleware(['guest'])
+    ->controller('login_controller');`,
+        },
+      },
+    ],
+  },
+  {
+    id: 'validation',
+    path: '/docs/validation',
+    category: 'Backend & Services',
+    title: 'Data Validation Subsystem',
+    subtitle: 'Pipe-delimited rule validation with UTF-8 length awareness and allowlist output.',
+    description: 'Master Spinx validation rules, custom error messages, nullable handling, and ValidationException formatting.',
+    readTime: '5 min read',
+    lastUpdated: 'Updated v1',
+    badge: 'Validation',
+    headings: [
+      { id: 'validator-usage', title: 'Basic Validation Usage', level: 2 },
+      { id: 'available-rules', title: 'Available Validation Rules', level: 2 },
+      { id: 'allowlist-output', title: 'Allowlist Data Return', level: 2 },
+      { id: 'custom-messages', title: 'Custom Error Messages & Exception Handling', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'validator-usage',
+        headingTitle: 'Basic Validation Usage',
+        content: `Validate incoming input arrays with pipe-delimited rule strings:`,
+        codeSnippet: {
+          title: 'Validation in Controller',
+          language: 'php',
+          code: `use Spinx\\Validation\\Validator;
+
+$validated = Validator::make($request->request->all(), [
+    'name' => 'required|string|max:100',
+    'email' => 'required|email',
+    'password' => 'required|min:8|confirmed',
+    'tier' => 'required|in:free,pro,enterprise',
+    'bio' => 'nullable|string|max:500',
+])->validate();`,
+        },
+      },
+      {
+        headingId: 'available-rules',
+        headingTitle: 'Available Validation Rules',
+        content: `Supported validation rules:`,
+        tableData: {
+          headers: ['Rule', 'Description'],
+          rows: [
+            ['required', 'Field must exist in the input array and cannot be empty string or null'],
+            ['nullable', 'If field is missing or empty, all subsequent validation rules on it are skipped'],
+            ['string', 'Value must be a string'],
+            ['integer', 'Value must be an integer or integer string'],
+            ['numeric', 'Value must be a numeric value (int or float)'],
+            ['array', 'Value must be an array'],
+            ['email', 'Value must pass filter_var EMAIL validation'],
+            ['min:n', 'Strings must have >= n characters (via mb_strlen); numbers must be >= n'],
+            ['max:n', 'Strings must have <= n characters (via mb_strlen); numbers must be <= n'],
+            ['in:a,b,c', 'Value must match one of the comma-separated options'],
+            ['confirmed', 'Value must match {field}_confirmation in the input array'],
+          ],
+        },
+      },
+      {
+        headingId: 'allowlist-output',
+        headingTitle: 'Allowlist Data Return',
+        content: `Calling \`validate()\` returns an array containing ONLY the fields declared in your rules map, discarding any undeclared or unexpected payload fields automatically.`,
+      },
+      {
+        headingId: 'custom-messages',
+        headingTitle: 'Custom Error Messages & Exception Handling',
+        content: `Customize error messages per field and rule:`,
+        codeSnippet: {
+          title: 'Custom Error Messages',
+          language: 'php',
+          code: `$validator = Validator::make($data, $rules, [
+    'email.required' => 'We need an email address to create your account.',
+    'email.email' => 'Please provide a valid corporate email.',
+]);
+
+if ($validator->fails()) {
+    $errors = $validator->errors(); // ['email' => ['We need an email...']]
+}`,
         },
       },
     ],
@@ -669,115 +746,185 @@ $app->bind(InvoiceService::class)->requestScoped();`,
     lastUpdated: 'Updated v1',
     badge: 'Async Workloads',
     headings: [
-      { id: 'dispatching-jobs', title: 'Dispatching Async Queue Jobs', level: 2 },
-      { id: 'task-scheduler', title: 'Cron Task Scheduler', level: 2 },
+      { id: 'dispatching-jobs', title: 'Dispatching Database-Backed Jobs', level: 2 },
+      { id: 'task-scheduler', title: 'Task Scheduler & schedule.php', level: 2 },
+      { id: 'running-scheduler', title: 'Running the Scheduler (spinx schedule:run)', level: 2 },
       { id: 'worker-isolation', title: 'Worker Process Isolation', level: 2 },
-      { id: 'gotcha-queue-state', title: 'What Could Go Wrong: Queue State Assumption', level: 2 },
     ],
     sections: [
       {
         headingId: 'dispatching-jobs',
-        headingTitle: 'Dispatching Async Queue Jobs',
-        content: `Anything that doesn't need to block the HTTP response goes on a queue in one line:`,
+        headingTitle: 'Dispatching Database-Backed Jobs',
+        content: `Offload heavy processing to background queue workers:`,
         codeSnippet: {
           title: 'Dispatching Queue Job',
           language: 'php',
-          code: `$app->queue()->push(new SendInvoiceEmail($invoiceId));`,
+          code: `use Spinx\\Queue\\QueueManager;
+
+$queueManager->dispatch(new SendInvoiceEmailJob($invoiceId));`,
         },
       },
       {
         headingId: 'task-scheduler',
-        headingTitle: 'Cron Task Scheduler',
-        content: `Register recurring jobs against the application scheduler once — eliminating drift between codebase definitions and crontab entries on the server:`,
+        headingTitle: 'Task Scheduler & schedule.php',
+        content: `Define scheduled tasks in \`schedule.php\` at the project root using a fluent API:`,
         codeSnippet: {
-          title: 'bootstrap/scheduler.php',
+          title: 'schedule.php Definition',
           language: 'php',
-          code: `$app->scheduler()
-    ->job(ReconcileInvoices::class)
-    ->daily();`,
+          code: `use Spinx\\Schedule\\Scheduler;
+
+return function (Scheduler $scheduler, $container): void {
+    // Run daily at 03:00 AM:
+    $scheduler->call(function () use ($container) {
+        $container->get(CleanupService::class)->run();
+    }, 'daily cleanup')->daily('03:00');
+
+    // Run every 15 minutes:
+    $scheduler->call(fn() => checkMetrics(), 'check metrics')->everyMinutes(15);
+
+    // Run every Monday at 08:30:
+    $scheduler->call(fn() => sendReports(), 'weekly report')->weekly(1, '08:30');
+};`,
+        },
+      },
+      {
+        headingId: 'running-scheduler',
+        headingTitle: 'Running the Scheduler (spinx schedule:run)',
+        content: `A single OS cron entry invoking \`spinx schedule:run\` executes every due task:`,
+        codeSnippet: {
+          title: 'Crontab Configuration',
+          language: 'bash',
+          code: `* * * * * cd /path/to/app && php spinx schedule:run >> /dev/null 2>&1`,
         },
       },
       {
         headingId: 'worker-isolation',
         headingTitle: 'Worker Process Isolation',
-        content: `Queued jobs execute on dedicated background worker processes isolated from HTTP request workers. Services resolved inside a job handler go through their own fresh request-scoped container.`,
+        content: `Queued jobs execute on dedicated background worker processes (\`spinx queue:work\`) isolated from HTTP request workers. Services resolved inside a job handler go through their own fresh request-scoped container.`,
+      },
+    ],
+  },
+  {
+    id: 'openapi',
+    path: '/docs/openapi',
+    category: 'API & Reference',
+    title: 'OpenAPI 3.1 Specification Generator',
+    subtitle: 'Automatic OpenAPI schema generation from routes and PHP 8 attributes.',
+    description: 'Learn how to annotate Spinx controllers with PHP 8 attributes and generate OpenAPI 3.1 JSON schemas automatically.',
+    readTime: '4 min read',
+    lastUpdated: 'Updated v1',
+    badge: 'API & OpenAPI',
+    headings: [
+      { id: 'openapi-generation', title: 'Generating OpenAPI Schemas (spinx openapi:generate)', level: 2 },
+      { id: 'php8-attributes', title: 'PHP 8 OpenAPI Attributes', level: 2 },
+      { id: 'controller-example', title: 'Annotated Controller Example', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'openapi-generation',
+        headingTitle: 'Generating OpenAPI Schemas (spinx openapi:generate)',
+        content: `Spinx reflects registered routes and controller metadata to build an OpenAPI 3.1 schema:`,
+        codeSnippet: {
+          title: 'Terminal - Generate OpenAPI Spec',
+          language: 'bash',
+          code: `spinx openapi:generate --output=public/openapi.json
+# Output: [Spinx] OpenAPI specification generated → public/openapi.json`,
+        },
       },
       {
-        headingId: 'gotcha-queue-state',
-        headingTitle: 'What Could Go Wrong: Queue State Assumption',
-        content: `Queued jobs run on entirely separate worker processes from HTTP request workers. Any service resolved inside a job handler goes through its own fresh container — do not assume a job can read state left behind by the HTTP request that queued it. Pass everything explicitly through constructor arguments.`,
-        callout: {
-          type: 'warning',
-          title: 'What Could Go Wrong',
-          message: 'Never pass un-serialized Request or Session objects to queue constructors. Pass primitive IDs or serializable DTOs.',
+        headingId: 'php8-attributes',
+        headingTitle: 'PHP 8 OpenAPI Attributes',
+        content: `Annotate your controllers with Spinx OpenAPI attributes:
+• \`#[ApiSummary('Summary text', 'Optional description')]\`
+• \`#[ApiParam(name: 'id', in: 'path', type: 'string', required: true)]\`
+• \`#[ApiResponse(status: 200, description: 'Success response')]\`
+• \`#[ApiTag('Billing')]\``,
+      },
+      {
+        headingId: 'controller-example',
+        headingTitle: 'Annotated Controller Example',
+        content: `Controller with OpenAPI attributes:`,
+        codeSnippet: {
+          title: 'InvoiceShowController.php',
+          language: 'php',
+          code: `namespace App\\Modules\\Billing\\Infrastructure\\Http\\Controllers;
+
+use Spinx\\OpenApi\\Attributes\\{ApiSummary, ApiParam, ApiResponse, ApiTag};
+use Symfony\\Component\\HttpFoundation\\{Request, JsonResponse};
+
+#[ApiTag('Invoices')]
+#[ApiSummary('Fetch invoice details by ID')]
+#[ApiParam(name: 'id', in: 'path', type: 'integer', description: 'Invoice ID')]
+#[ApiResponse(status: 200, description: 'Invoice data returned')]
+#[ApiResponse(status: 404, description: 'Invoice not found')]
+final class InvoiceShowController
+{
+    public function __invoke(Request $request, int $id): JsonResponse
+    {
+        return new JsonResponse(['id' => $id, 'status' => 'paid']);
+    }
+}`,
         },
       },
     ],
   },
   {
-    id: 'inertia-setup',
-    path: '/docs/inertia-setup',
-    category: 'Frontend & Inertia',
-    title: 'Templating, Inertia & Native Reach',
-    subtitle: 'Vue 3 & React SPA hydration, Vite HMR, and mobile/desktop shell compilation.',
-    description: 'Learn how Inertia renders frontend views, configure Vite HMR, run native previewers, and understand mobile shell compilation.',
+    id: 'templating-islands',
+    path: '/docs/templating-islands',
+    category: 'Frontend & Islands',
+    title: 'Templates & Reactive Island Hydration',
+    subtitle: 'Ultra-fast server HTML rendering with selective client-side Vue & React island hydration.',
+    description: 'Learn Spinx HTML template directives, client-side island hydration (@island), Vite asset compilation, and mobile device preview tools.',
     readTime: '6 min read',
     lastUpdated: 'Updated v1',
-    badge: 'Frontend & Mobile',
+    badge: 'Frontend & Islands',
     headings: [
-      { id: 'inertia-model', title: 'Inertia Page Rendering Model', level: 2 },
-      { id: 'frontend-adapters', title: 'Vue 3 & React Swappable Adapters', level: 2 },
-      { id: 'vite-hmr-build', title: 'Vite HMR & Production Build', level: 2 },
-      { id: 'desktop-mobile-previewer', title: 'Desktop & Mobile Previewer', level: 2 },
-      { id: 'mobile-compilation', title: 'Mobile Shell Compilation (Path A vs B)', level: 2 },
+      { id: 'template-directives', title: 'Spinx Template Directives', level: 2 },
+      { id: 'island-hydration', title: 'Client Island Hydration (@island)', level: 2 },
+      { id: 'vite-integration', title: 'Vite Asset Pipeline & HMR', level: 2 },
+      { id: 'mobile-preview', title: 'Mobile Device Preview Tool (spinx preview --mobile)', level: 2 },
     ],
     sections: [
       {
-        headingId: 'inertia-model',
-        headingTitle: 'Inertia Page Rendering Model',
-        content: `Spinx renders through Inertia — server-driven page rendering with shared props and zero API boilerplate duplication:`,
+        headingId: 'template-directives',
+        headingTitle: 'Spinx Template Directives',
+        content: `Spinx templates compile to high-speed native PHP with familiar directives:
+• \`{{ $variable }}\` (HTML-escaped output)
+• \`{!! $rawHtml !!}\` (Unescaped output)
+• \`@if($condition) ... @endif\`
+• \`@foreach($items as $item) ... @endforeach\`
+• \`@csrf\` (Hidden CSRF input field)`,
+      },
+      {
+        headingId: 'island-hydration',
+        headingTitle: 'Client Island Hydration (@island)',
+        content: `Embed reactive Vue 3 or React 19 client components directly in server HTML templates:`,
         codeSnippet: {
-          title: 'InvoiceController.php - Inertia Render',
-          language: 'php',
-          code: `public function show(Request $request, string $invoiceId): Response
-{
-    return Inertia::render('Invoices/Show', [
-        'invoice' => $this->invoices->find($invoiceId),
-    ]);
-}`,
+          title: 'View Template with Island',
+          language: 'html',
+          code: `<div class="dashboard-card">
+    <h2>Realtime Metrics</h2>
+    <p>Server-rendered at {{ date('H:i') }}</p>
+
+    <!-- Client-side reactive island hydrated via Vite -->
+    @island('MetricsChart', ['projectId' => $project->id, 'initialData' => $metrics])
+</div>`,
         },
       },
       {
-        headingId: 'frontend-adapters',
-        headingTitle: 'Vue 3 & React Swappable Adapters',
-        content: `Vue 3 ships as the default frontend adapter. React 19 is available via \`spinx new --frontend=react\`, using the exact same Inertia controller contract.`,
+        headingId: 'vite-integration',
+        headingTitle: 'Vite Asset Pipeline & HMR',
+        content: `During development (\`spinx serve\`), Vite provides sub-50ms Hot Module Replacement. In production (\`spinx build\`), Vite compiles static bundles with hashed filenames for immutable caching.`,
       },
       {
-        headingId: 'vite-hmr-build',
-        headingTitle: 'Vite HMR & Production Build',
-        content: `During development (\`spinx serve\`), backend workers and Vite dev server run concurrently. In production (\`spinx build\`), Vite outputs static assets that are served directly by the PHP runtime adapter without a Node process in production.`,
-      },
-      {
-        headingId: 'desktop-mobile-previewer',
-        headingTitle: 'Desktop & Mobile Previewer',
-        content: `Spinx orchestrates native platform tooling directly:`,
+        headingId: 'mobile-preview',
+        headingTitle: 'Mobile Device Preview Tool (spinx preview --mobile)',
+        content: `Launch the interactive browser-based device container to test your responsive views on simulated iPhone and Android viewports:`,
         codeSnippet: {
-          title: 'Terminal - Launch Native Previewers',
+          title: 'Terminal - Launch Mobile Preview',
           language: 'bash',
-          code: `spinx preview --android   # Launches Android Emulator via ADB
-spinx preview --ios       # Launches iOS Simulator via Xcode tooling
-spinx preview --desktop   # Opens native WebView window via Go shell`,
-        },
-      },
-      {
-        headingId: 'mobile-compilation',
-        headingTitle: 'Mobile Shell Compilation (Path A vs B)',
-        content: `• Path A (Committed v1 Scope): Compiled Vue/React frontend assets wrapped in a Go-built native shell (WebView wrapper). Communicates with the Spinx backend over REST/WebSockets.
-• Path B (Phase 2 Feasibility Spike): On-device PHP runtime (FrankenPHP cgo approach). Explicitly non-committed pending a standalone feasibility spike.`,
-        callout: {
-          type: 'note',
-          title: 'Path A Native Mobile Strategy',
-          message: 'Path A provides instant mobile app deployment to App Store / Play Store while keeping the backend centralized.',
+          code: `spinx preview --mobile
+# Opens interactive device preview container with iPhone 15 Pro, Pixel 7, and Galaxy presets`,
         },
       },
     ],
@@ -789,7 +936,7 @@ spinx preview --desktop   # Opens native WebView window via Go shell`,
     title: 'CLI Reference & Commands',
     subtitle: 'Complete command-line interface specification for Spinx framework.',
     description: 'Comprehensive reference of all CLI commands for project creation, code generation, runtime management, and previewers.',
-    readTime: '4 min read',
+    readTime: '5 min read',
     lastUpdated: 'Updated v1',
     badge: 'Reference',
     headings: [
@@ -804,22 +951,37 @@ spinx preview --desktop   # Opens native WebView window via Go shell`,
         tableData: {
           headers: ['Command', 'Purpose'],
           rows: [
-            ['spinx new <project>', 'Scaffold new app with enforced module dir, frontend, runtime config'],
-            ['spinx make:module <Name>', 'Generate full DDD module skeleton'],
-            ['spinx make:controller <Module> <Name>', 'Generate controller, module-scoped only'],
-            ['spinx make:entity, make:service, make:repository', 'Layer-scoped generator tools'],
-            ['spinx serve', 'Boot backend runtime + Vite dev server with HMR'],
-            ['spinx module:migrate <Name>', 'Run a single module\'s migrations independently'],
-            ['spinx preview --android | --ios | --desktop', 'Launch native platform previewers'],
-            ['spinx build', 'Production build (Vite bundle + backend container cache)'],
+            ['spinx new <project> [--frontend=vue|react]', 'Scaffold a brand new Spinx project'],
+            ['spinx serve', 'Boot backend persistent worker + Vite dev server with HMR'],
             ['spinx driver:swap <roadrunner|swoole>', 'Switch runtime driver in spinx.json'],
+            ['spinx make:module <Name>', 'Generate full DDD module skeleton'],
+            ['spinx make:controller <Module> <Name>', 'Generate controller in module Infrastructure layer'],
+            ['spinx make:entity <Module> <Name>', 'Generate Domain entity'],
+            ['spinx make:service <Module> <Name>', 'Generate Application service'],
+            ['spinx make:repository <Module> <Name>', 'Generate repository interface & implementation pair'],
+            ['spinx make:model <Module> <Name>', 'Generate ORM model in Infrastructure layer'],
+            ['spinx make:middleware <Module> <Name>', 'Generate middleware class'],
+            ['spinx make:migration <Module> <desc>', 'Generate timestamped database migration'],
+            ['spinx make:mail <Module> <Name>', 'Generate Mailable + view + queueable Job'],
+            ['spinx migrate [Name]', 'Run pending database migrations'],
+            ['spinx queue:work', 'Poll and process database-backed job queue'],
+            ['spinx schedule:run', 'Run all due tasks declared in schedule.php'],
+            ['spinx schema:compile', 'Introspect database schema and write storage/cache/schema_columns.php'],
+            ['spinx openapi:generate', 'Generate OpenAPI 3.1 specification from routes and attributes'],
+            ['spinx preview --mobile', 'Open dev server in interactive browser-based mobile preview container'],
+            ['spinx preview --android', 'Open dev server on connected Android device/emulator'],
+            ['spinx preview --ios', 'Open dev server on iOS Simulator (macOS + Xcode)'],
+            ['spinx preview --desktop', 'Open dev server in native desktop webview window'],
+            ['spinx build:mobile --android', 'Scaffold native Android shell (Kotlin + WebView) in mobile/android/'],
+            ['spinx build:mobile --ios', 'Scaffold native iOS shell (Swift + WKWebView) in mobile/ios/'],
+            ['spinx build', 'Production build: compiled frontend assets + primed backend cache'],
           ],
         },
       },
       {
         headingId: 'generator-reference',
         headingTitle: 'Code Generators Reference',
-        content: `All code generator commands enforce module boundaries. Attempting to generate a controller without specifying a module target will prompt for module selection.`,
+        content: `All code generator commands enforce module boundaries. Generated files are placed strictly within their designated DDD layer inside the target module.`,
       },
     ],
   },
@@ -849,14 +1011,15 @@ spinx preview --desktop   # Opens native WebView window via Go shell`,
         headingTitle: 'Tenant Isolation Middleware',
         content: `Register a tenant identification middleware on routes requiring multi-tenant scoping:`,
         codeSnippet: {
-          title: 'IdentifyTenant.php',
+          title: 'TenantMiddleware.php',
           language: 'php',
-          code: `final class IdentifyTenant
+          code: `final class TenantMiddleware
 {
-    public function handle(Request $request, Closure $next): Response
+    public function process(Request $request, \\Closure $next): Response
     {
         $tenantId = $request->headers->get('X-Tenant-ID');
-        Container::requestScope()->bind(Tenant::class, fn() => Tenant::find($tenantId));
+        $request->attributes->set('tenant_id', $tenantId);
+
         return $next($request);
     }
 }`,
@@ -865,135 +1028,18 @@ spinx preview --desktop   # Opens native WebView window via Go shell`,
       {
         headingId: 'async-stripe-webhooks',
         headingTitle: 'Async Stripe Webhook Handler',
-        content: `Process incoming Stripe webhooks instantly by responding with HTTP 200 and pushing heavy billing reconciliation onto the background queue:`,
+        content: `Offload heavy Stripe webhook events immediately to background workers:`,
         codeSnippet: {
           title: 'StripeWebhookController.php',
           language: 'php',
-          code: `public function handle(Request $request): Response
+          code: `public function __invoke(Request $request): JsonResponse
 {
-    $payload = $request->getContent();
-    $app->queue()->push(new ProcessStripeEvent($payload));
-    return Response::json(['received' => true]);
-}`,
-        },
-      },
-    ],
-  },
-  {
-    id: 'microservice',
-    path: '/docs/guides/microservice',
-    category: 'Guides & Examples',
-    title: 'High-Throughput Microservice & Gateway Guide',
-    subtitle: 'Architecting ultra-fast API proxies and microservices with Spinx.',
-    description: 'Learn how to build sub-millisecond API gateways, in-memory rate limiters, and microservices.',
-    readTime: '6 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'Guide',
-    headings: [
-      { id: 'gateway-overview', title: 'Microservice Gateway Architecture', level: 2 },
-      { id: 'rate-limiting', title: 'In-Memory Rate Limiting', level: 2 },
-    ],
-    sections: [
-      {
-        headingId: 'gateway-overview',
-        headingTitle: 'Microservice Gateway Architecture',
-        content: `Due to persistent worker memory state, Spinx functions as a high-throughput API gateway or microservice router, matching routes and forwarding requests in under 0.2ms.`,
-      },
-      {
-        headingId: 'rate-limiting',
-        headingTitle: 'In-Memory Rate Limiting',
-        content: `Leverage long-running worker RAM for ultra-fast token bucket rate limiting without external Redis roundtrips:`,
-        codeSnippet: {
-          title: 'RateLimiterMiddleware.php',
-          language: 'php',
-          code: `final class RateLimiter
-{
-    private static array $hits = [];
+    $event = json_decode($request->getContent(), true);
 
-    public function handle(Request $request, Closure $next): Response
-    {
-        $ip = $request->getClientIp();
-        self::$hits[$ip] = (self::$hits[$ip] ?? 0) + 1;
-        if (self::$hits[$ip] > 1000) {
-            return Response::json(['error' => 'Rate limit exceeded'], 429);
-        }
-        return $next($request);
-    }
-}`,
-        },
-      },
-    ],
-  },
-  {
-    id: 'testing-deployment',
-    path: '/docs/testing-deployment',
-    category: 'API & Reference',
-    title: 'Testing, Leak Detection & Deployment',
-    subtitle: 'Conformance test suite, dev leak detector, and graceful worker deployment mechanics.',
-    description: 'Understand the automated conformance test matrix, memory leak detector, Docker builds, and zero-downtime worker reloads.',
-    readTime: '6 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'DevOps & QA',
-    headings: [
-      { id: 'conformance-testing', title: 'Runtime Conformance Test Suite', level: 2 },
-      { id: 'dev-leak-detector', title: 'Dev-Mode Memory Leak Detector', level: 2 },
-      { id: 'deployment-mechanics', title: 'Packaging & Production Deployment', level: 2 },
-      { id: 'security-hardening', title: 'Security Hardening Checklist', level: 2 },
-      { id: 'roadmap-risks', title: 'Roadmap & Open Risk Matrix', level: 2 },
-    ],
-    sections: [
-      {
-        headingId: 'conformance-testing',
-        headingTitle: 'Runtime Conformance Test Suite',
-        content: `Both runtime adapters (RoadRunner & Swoole) pass an identical automated conformance test suite. Tests verify exact Request/Response object contracts, header casing, middleware execution order, and exception handling across both drivers.`,
-      },
-      {
-        headingId: 'dev-leak-detector',
-        headingTitle: 'Dev-Mode Memory Leak Detector',
-        content: `A dev-mode leak detector runs after every HTTP request in test/CI environments and fails loudly if:
-1. The request-scoped container holds reachable references after response teardown.
-2. A DB connection was checked out from the pool but never returned.
-3. PHP output buffer depth differs from what it was pre-request.
+    $this->queueManager->dispatch(new ProcessStripeWebhookJob($event));
 
-This turns subtle state-poisoning bugs into immediate failing test cases.`,
-        callout: {
-          type: 'performance',
-          title: 'Automated Leak Guard',
-          message: 'CI test runs automatically fail if any request leaks references or unreturned DB handles across requests.',
-        },
-      },
-      {
-        headingId: 'deployment-mechanics',
-        headingTitle: 'Packaging & Production Deployment',
-        content: `• Shipped as a Composer package with automatic platform binary downloads.
-• Official Docker container image published for Swoole deployments.
-• Deployments require issuing a graceful worker reload (\`spinx reload\`) to drain active requests without dropping TCP connections.`,
-        codeSnippet: {
-          title: 'Terminal - Graceful Production Reload',
-          language: 'bash',
-          code: `spinx reload --drain-timeout=30`,
-        },
-      },
-      {
-        headingId: 'security-hardening',
-        headingTitle: 'Security Hardening Checklist',
-        content: `1. Auth gates declared directly on route signatures (§13).
-2. Request-scoped state isolation (§5) preventing cross-user session leaks.
-3. Static analysis rules (§5.1, §6.2) blocking singleton state mutation.
-4. First-party CSRF and CORS middleware enabled by default.`,
-      },
-      {
-        headingId: 'roadmap-risks',
-        headingTitle: 'Roadmap & Open Risk Matrix',
-        content: `Open Risk Assessment Matrix:`,
-        tableData: {
-          headers: ['Subsystem / Item', 'Risk Level', 'Mitigation Strategy / Notes'],
-          rows: [
-            ['Static analysis DDD enforcement', 'Medium', 'Custom PHPStan / Psalm rule suite shipped in core'],
-            ['Coroutine-safe DB connection pooling', 'Medium', 'Adapter-specific pool implementations (checked in CI)'],
-            ['Go-based mobile shell maturity', 'Medium-High', 'Isolated WebView wrapper fallback available'],
-            ['On-device PHP runtime (Path B)', 'High', 'Deferred pending Phase 2 standalone feasibility spike'],
-          ],
+    return new JsonResponse(['status' => 'queued'], 200);
+}`,
         },
       },
     ],

@@ -19,26 +19,30 @@ export const OneConfigSection: React.FC<OneConfigSectionProps> = ({
   const [copiedRoutes, setCopiedRoutes] = useState(false);
 
   const spinxJsonCode = `{
+  "appName": "Spinx App",
   "driver": "${driver}",
   "frontend": "${frontend}",
-  "modules": ["Billing", "Auth", "Catalog"],
-  "database": { "connection": "${database}" },
-  "migrations": { "auto_run": true },
-  "static_analysis": { "level": 8, "strict_types": true }
+  "modules": {
+    "Billing": true,
+    "Catalog": true
+  }
 }`;
 
-  const routesCode = `Route::get('/invoices/{invoiceId}', [InvoiceController::class, 'show']);
+  const routesCode = `// app/Modules/Billing/module.php
+Route::get(['invoices.show', '/invoices/{id}'])
+    ->middleware(['auth'])
+    ->controller('invoice_controller');
 
-// Spinx auto-resolves Inertia view component from "frontend": "${frontend}"
-Route::get('/dashboard', fn() => Inertia::render('Dashboard/Overview'));`;
+// View template renders server HTML with targeted ${frontend.toUpperCase()} island:
+// @island('DashboardOverview', ['driver' => '${driver}'])`;
 
   const tiles = [
-    { title: 'Runtime driver', val: driver, opt: ['roadrunner', 'swoole', 'workerman'] },
-    { title: 'Module registry', val: 'Billing, Auth, Catalog', opt: [] },
-    { title: 'Frontend adapter', val: frontend, opt: ['vue', 'react', 'svelte'] },
+    { title: 'Runtime driver', val: driver, opt: ['roadrunner', 'swoole'] },
+    { title: 'Module registry', val: 'Billing, Catalog', opt: [] },
+    { title: 'Frontend adapter', val: frontend, opt: ['vue', 'react'] },
     { title: 'Database', val: database, opt: ['pgsql', 'mysql', 'sqlite'] },
-    { title: 'Migrations', val: 'auto_run: true', opt: [] },
-    { title: 'Static analysis rules', val: 'level: 8', opt: [] },
+    { title: 'Schedule runner', val: 'spinx schedule:run', opt: [] },
+    { title: 'Static analysis', val: 'NoMutableStaticStateRule', opt: [] },
   ];
 
   const handleCopy = (text: string, setCopied: (v: boolean) => void) => {

@@ -8,44 +8,45 @@ export const DeepDiveSection: React.FC = () => {
       id: 'auth',
       title: 'Put the gate on the route.',
       description:
-        "Auth isn't middleware you assemble from three packages. Declaring auth on a route gates it and documents it in the same place — no separate guard config to keep in sync with what the route actually enforces.",
-      code: `Route::get('/invoices/{invoiceId}', [InvoiceController::class, 'show'])
-    ->middleware('auth:session');`,
-      filename: 'routes/web.php',
+        "Auth isn't middleware you assemble from multiple disparate packages. Declaring the 'auth' alias on a route gates it cleanly and resolves through the session subsystem with zero state leakage.",
+      code: `Route::get(['invoices.show', '/invoices/{id}'])
+    ->middleware(['auth'])
+    ->controller('invoice_controller');`,
+      filename: 'app/Modules/Billing/module.php',
       reversed: false,
     },
     {
       id: 'queues',
       title: 'Move slow work out of the request.',
       description:
-        "Persistent workers make slow requests expensive in a way PHP-FPM never punished. Anything that doesn't need to block the response goes on a queue, off the worker, in one line.",
-      code: `$app->queue()->push(new SendInvoiceEmail($invoiceId));`,
-      filename: 'app/Modules/Billing/Events.php',
+        "Persistent workers make slow requests expensive. Anything that doesn't need to block the response gets dispatched to a database-backed queue in one clean line.",
+      code: `$queueManager->dispatch(new SendInvoiceEmailJob($invoiceId));`,
+      filename: 'app/Modules/Billing/Application/SendInvoice.php',
       reversed: true,
     },
     {
       id: 'scheduler',
       title: 'Register recurring work with the app.',
       description:
-        'Setup a scheduler once, register recurring jobs against the app, and the scheduler manager runs it — no separate cron entry, no drift between what the code says and what the box actually runs.',
-      code: `$app->scheduler()
-    ->job(ReconcileInvoices::class)
-    ->daily();`,
-      filename: 'bootstrap/scheduler.php',
+        'Configure cron schedules in schedule.php using a fluent API. One OS crontab entry runs `spinx schedule:run`, and Spinx figures out what tasks are due.',
+      code: `$scheduler->call(function () use ($container) {
+    $container->get(ReconcileService::class)->reconcile();
+}, 'daily reconciliation')->daily('02:00');`,
+      filename: 'schedule.php',
       reversed: false,
     },
     {
-      id: 'inertia',
-      title: 'Render Vue and React pages from Spinx routes.',
+      id: 'islands',
+      title: 'Dynamic Vue and React client islands.',
       description:
-        'Shared props, Vite-powered assets, and server-driven page rendering through Inertia — no separate API layer to keep in sync with the frontend it feeds. Vue ships by default; React is available at `spinx new --frontend=react` behind the same contract.',
-      code: `public function show(Request $request, string $invoiceId): Response
-{
-    return Inertia::render('Invoices/Show', [
-        'invoice' => $this->invoices->find($invoiceId),
-    ]);
-}`,
-      filename: 'InvoiceController.php',
+        'Ultra-fast server-rendered HTML with selective client-side hydration islands (@island) — powered by Vite for instant HMR in Vue 3 or React 19.',
+      code: `<div class="invoice-container">
+    <h1>Invoice #{{ $invoice->id }}</h1>
+    
+    <!-- Client reactive island (Vue/React) -->
+    @island('InvoiceViewer', ['invoice' => $invoice])
+</div>`,
+      filename: 'Infrastructure/Http/Views/show.spinx.html',
       reversed: true,
     },
   ];

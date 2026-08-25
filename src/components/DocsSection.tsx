@@ -137,6 +137,7 @@ export const DocsSection: React.FC<DocsSectionProps> = ({
         return <Layers size={14} className="text-[#E11D63]" />;
       case 'Backend & Services':
         return <Zap size={14} className="text-[#E11D63]" />;
+      case 'Frontend & Islands':
       case 'Frontend & Inertia':
         return <Code size={14} className="text-[#E11D63]" />;
       case 'API & Reference':

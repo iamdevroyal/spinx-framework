@@ -27,69 +27,95 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     routing: {
       filename: 'app/Modules/Projects/module.php',
       code: `use App\\Modules\\Projects\\Infrastructure\\Http\\Controllers\\ProjectController;
-use Spinx\\Routing\\Route;
+use Spinx\\Auth\\Middleware\\AuthMiddleware;
+use Spinx\\Routing\\{AliasRegistry, Route, RouteBuilder};
 
-// Declare route gates, middleware & OpenAPI spec in module.php
-Route::get('/projects/{projectId}', [ProjectController::class, 'show'])
-    ->middleware('auth:session')
-    ->openapi(summary: "Fetch project details by ID");
-
-public function show(Request $request, string $projectId): Response
-{
-    return Response::json([
-        "id" => $projectId,
-        "name" => "Spinx Marketing",
-        "status" => "active"
-    ]);
-}`,
+return [
+    'controllers' => static function (AliasRegistry $r): void {
+        $r->registerController('project_show', ProjectController::class);
+    },
+    'middlewares' => static function (AliasRegistry $r): void {
+        $r->registerMiddleware('auth', AuthMiddleware::class);
+    },
+    'routes' => static function (RouteBuilder $routes): void {
+        Route::get(['projects.show', '/projects/{id}'])
+            ->middleware(['auth'])
+            ->controller('project_show');
+    },
+];`,
     },
     auth: {
-      filename: 'app/Security/AuthPolicy.php',
-      code: `// Declare auth once — gates route & generates OpenAPI spec
-$app->auth()->policy('jwt', function (Request $req) {
-    return AuthGuard::verifyBearerToken($req->header('Authorization'));
-});
+      filename: 'app/Modules/Auth/Infrastructure/Http/Controllers/LoginController.php',
+      code: `use Spinx\\Auth\\{Auth, Hash};
+use Symfony\\Component\\HttpFoundation\\{Request, JsonResponse};
 
-Route::get('/v1/billing/invoices', [InvoiceController::class, 'index'])
-    ->middleware('auth:jwt')
-    ->openapi(summary: "Fetch organization billing invoices");`,
+final class LoginController
+{
+    public function __invoke(Request $request): JsonResponse
+    {
+        $credentials = [
+            'email' => $request->request->get('email'),
+            'password' => $request->request->get('password'),
+        ];
+
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            return new JsonResponse(['user' => ['id' => $user->id, 'email' => $user->email]]);
+        }
+
+        return new JsonResponse(['error' => 'Invalid credentials'], 401);
+    }
+}`,
     },
     queue: {
-      filename: 'app/Jobs/ProcessWebhook.php',
-      code: `// Async background jobs offloaded seamlessly from worker thread
-$app->queue()->push(new ProcessWebhook([
-    'event' => 'invoice.payment_succeeded',
-    'customer_id' => 'cust_8921x',
-    'amount' => 4900,
-]), queue: 'high-priority', delayInSeconds: 0);`,
+      filename: 'app/Modules/Billing/Application/DispatchWebhook.php',
+      code: `use Spinx\\Queue\\QueueManager;
+use App\\Modules\\Billing\\Application\\Jobs\\ProcessWebhookJob;
+
+// Dispatch database-backed background jobs asynchronously
+$queueManager->dispatch(new ProcessWebhookJob(
+    event: 'invoice.payment_succeeded',
+    customerId: 'cust_8921x',
+    amount: 4900
+));`,
     },
     validation: {
-      filename: 'app/Http/Requests/CreateProjectRequest.php',
-      code: `$request->validate([
+      filename: 'app/Modules/Projects/Infrastructure/Http/Controllers/StoreProjectController.php',
+      code: `use Spinx\\Validation\\Validator;
+
+// Explicit, allowlist validation with UTF-8 mb_strlen & rich rules
+$data = Validator::make($request->request->all(), [
     'name' => 'required|string|max:255',
-    'slug' => 'required|alpha_dash|unique:projects',
     'tier' => 'required|in:starter,growth,enterprise',
-    'features' => 'array',
-]);`,
+    'email' => 'nullable|email',
+    'password' => 'required|min:8|confirmed',
+])->validate(); // Returns strictly allowed attributes or throws ValidationException`,
     },
     di: {
-      filename: 'bootstrap/providers.php',
-      code: `// Scoped Dependency Injection resolved at kernel boundary
-$container->bind(InvoiceService::class, function ($app) {
-    return new InvoiceService(
-        repository: $app->make(InvoiceRepositoryInterface::class),
-        gateway: $app->make(StripePaymentGateway::class)
-    );
-});`,
+      filename: 'app/Modules/Billing/module.php',
+      code: `use Symfony\\Component\\DependencyInjection\\ContainerBuilder;
+use App\\Modules\\Billing\\Domain\\InvoiceRepositoryInterface;
+use App\\Modules\\Billing\\Infrastructure\\Persistence\\InvoiceRepository;
+
+return [
+    'services' => static function (ContainerBuilder $container, string $moduleDir): void {
+        // Enforced request-scoping applied automatically to module services
+        $container->register(InvoiceRepositoryInterface::class, InvoiceRepository::class)
+            ->setAutowired(true)
+            ->setPublic(true);
+    },
+];`,
     },
     orm: {
-      filename: 'app/Domain/ProjectRepository.php',
-      code: `// Coroutine-safe ORM with high-throughput connection pooling
+      filename: 'app/Modules/Projects/Application/ListProjects.php',
+      code: `// Coroutine-safe Active-Record ORM with batched eager loading
 $projects = Project::query()
+    ->selectWithout('secret_token', 'internal_notes')
     ->where('status', 'active')
-    ->with(['team', 'deployments'])
-    ->orderBy('created_at', 'desc')
-    ->paginate(limit: 25);`,
+    ->when($hasFilter)->then(fn($q) => $q->where('total', '>', 500))
+    ->with('team', 'deployments')
+    ->latest()
+    ->paginate(25);`,
     },
   };
 

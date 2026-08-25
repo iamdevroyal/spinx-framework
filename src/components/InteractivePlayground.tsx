@@ -46,19 +46,10 @@ export const InteractivePlayground: React.FC<InteractivePlaygroundProps> = ({
 
   const spinxJsonCode = JSON.stringify(
     {
+      appName: 'Spinx App',
       driver: config.driver,
       frontend: config.frontend,
-      modules: config.modules,
-      database: {
-        connection: config.database,
-      },
-      migrations: {
-        auto_run: true,
-      },
-      static_analysis: {
-        level: 8,
-        strict_types: true,
-      },
+      modules: Object.fromEntries(config.modules.map(m => [m, true])),
     },
     null,
     2
@@ -66,20 +57,20 @@ export const InteractivePlayground: React.FC<InteractivePlaygroundProps> = ({
 
   const bootstrapAppCode = `<?php
 
-use Spinx\\Foundation\\SpinxApp;
+declare(strict_types=1);
 
-$app = SpinxApp::boot();
+use Spinx\\Kernel\\Kernel;
+use Symfony\\Component\\HttpFoundation\\Request;
 
-${config.modules
-  .map(
-    (m) =>
-      `$app->module('${m}')\n    ->routes()\n    ->service(App\\Modules\\${m}\\Application\\${m}Service::class);`
-  )
-  .join('\n\n')}
+// 1. Single kernel boot per worker process
+$kernel = new Kernel(__DIR__);
+$kernel->boot();
 
-$app->driver('${config.driver}');
-
-$app->run();`;
+// 2. Discover & dispatch DDD modules (${config.modules.join(', ')})
+// Driver: ${config.driver.toUpperCase()} | Frontend: ${config.frontend.toUpperCase()}
+$request = Request::createFromGlobals();
+$response = $kernel->handle($request);
+$response->send();`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(spinxJsonCode);

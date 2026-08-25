@@ -101,7 +101,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const frameworkItems = [
     { title: 'Core Architecture', desc: 'Kernel boot, module isolation & request context', path: '/docs/architecture' },
     { title: 'RoadRunner & Swoole', desc: 'High-throughput async persistent worker runtimes', path: '/docs/architecture' },
-    { title: 'Inertia Hydration', desc: 'Vue & React server-side rendering pipeline', path: '/docs/guides/saas-quickstart' },
+    { title: 'Island Hydration', desc: 'Vue & React selective client island hydration', path: '/docs/inertia-setup' },
   ];
 
   const resourcesDropdownItems = [

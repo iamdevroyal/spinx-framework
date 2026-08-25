@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  A next-generation PHP framework engineered for long-running persistent runtimes, kernel-enforced Domain-Driven Design (DDD) module boundaries, and zero-drift Vue & React Inertia SPA hydration.
+  A next-generation PHP framework engineered for long-running persistent runtimes, kernel-enforced Domain-Driven Design (DDD) module boundaries, and Vue & React island hydration.
 </p>
 
 <p align="center">
@@ -37,9 +37,9 @@ Unlike frameworks where architectural structure is a loose suggestion in the doc
 - **🏗️ Enforced DDD Architecture**: Business logic is strictly partitioned into `app/Modules/<Name>/{Domain, Application, Infrastructure}`. Autodiscovery ignores loose files outside modules.
 - **⚙️ Single Source of Truth (`spinx.json`)**: Declare runtime drivers, frontend adapters, database connection pools, and active modules in one declarative configuration file.
 - **🛡️ Request-Scoped State Safety**: Built-in `RequestScope` container wrappers and automated dev-mode leak detectors catch static/singleton memory leaks before CI completes.
-- **🎨 Vue 3 & React 19 Inertia Hydration**: Server-driven SPA rendering with shared props, zero API boilerplate duplication, and Vite HMR.
-- **⏳ Non-Blocking Queues & Scheduler**: Offload slow tasks to background workers in one line, and register cron jobs directly against application code.
-- **📱 Native Reach & Previewers**: Built-in CLI previewers for Android (ADB), iOS (Xcode), and Desktop (Go WebView), with a path to native shell compilation.
+- **🎨 Vue 3 & React 19 Island Hydration**: Server-rendered HTML with selective client-side hydration islands (`@island`) and instant Vite HMR.
+- **⏳ Non-Blocking Queues & Scheduler**: Database-backed job queues and an in-framework cron scheduler (`spinx schedule:run`).
+- **📱 Native Reach & Previewers**: Built-in CLI previewers for Mobile (`--mobile`), Android (`--android`), iOS (`--ios`), and Desktop (`--desktop`).
 
 ---
 
@@ -144,12 +144,22 @@ app/Modules/Billing/
 
 ```php
 use App\Modules\Billing\Infrastructure\Http\Controllers\InvoiceController;
-use Spinx\Routing\Route;
+use Spinx\Auth\Middleware\AuthMiddleware;
+use Spinx\Routing\{AliasRegistry, Route, RouteBuilder};
 
-// Auth gate declared directly on the route signature
-Route::get('/invoices/{invoiceId}', [InvoiceController::class, 'show']);
-Route::post('/invoices', [InvoiceController::class, 'store'])
-    ->middleware('auth:session');
+return [
+    'controllers' => static function (AliasRegistry $r): void {
+        $r->registerController('invoice_show', InvoiceController::class);
+    },
+    'middlewares' => static function (AliasRegistry $r): void {
+        $r->registerMiddleware('auth', AuthMiddleware::class);
+    },
+    'routes' => static function (RouteBuilder $routes): void {
+        Route::get(['invoices.show', '/invoices/{id}'])
+            ->middleware(['auth'])
+            ->controller('invoice_show');
+    },
+];
 ```
 
 ### Controller (`app/Modules/Billing/Infrastructure/Http/Controllers/InvoiceController.php`):
@@ -158,20 +168,23 @@ Route::post('/invoices', [InvoiceController::class, 'store'])
 namespace App\Modules\Billing\Infrastructure\Http\Controllers;
 
 use Symfony\Component\HttpFoundation\{Request, Response};
-use Spinx\Inertia\Inertia;
+use Spinx\Templating\TemplateRenderer;
 use App\Modules\Billing\Application\Services\InvoiceService;
 
 final class InvoiceController
 {
     public function __construct(
         private readonly InvoiceService $invoices,
+        private readonly TemplateRenderer $renderer,
     ) {}
 
-    public function show(Request $request, string $invoiceId): Response
+    public function __invoke(Request $request, string $id): Response
     {
-        return Inertia::render('Invoices/Show', [
-            'invoice' => $this->invoices->find($invoiceId),
-        ]);
+        $invoice = $this->invoices->find($id);
+
+        return new Response(
+            $this->renderer->render('Billing::invoice', ['invoice' => $invoice])
+        );
     }
 }
 ```
@@ -184,10 +197,15 @@ final class InvoiceController
 |---|---|
 | `spinx new <project>` | Scaffold new app with enforced module layout & runtime config |
 | `spinx make:module <Name>` | Generate full DDD module skeleton |
-| `spinx make:controller <Module> <Name>` | Generate controller (module-scoped only) |
+| `spinx make:controller <Module> <Name>` | Generate controller in module Infrastructure layer |
 | `spinx make:entity`, `make:service` | Generate domain entities and application services |
 | `spinx serve` | Boot backend persistent worker + Vite dev server with HMR |
-| `spinx module:migrate <Name>` | Run a single module's schema migrations |
+| `spinx migrate [Name]` | Run pending database migrations |
+| `spinx queue:work` | Poll and process database-backed job queue |
+| `spinx schedule:run` | Run due scheduled tasks declared in `schedule.php` |
+| `spinx schema:compile` | Compile database schema into immutable column cache |
+| `spinx openapi:generate` | Generate OpenAPI 3.1 schema from routes and attributes |
+| `spinx preview --mobile` | Launch browser-based interactive mobile device container |
 | `spinx preview --android \| --ios \| --desktop` | Launch native platform previewers |
 | `spinx build` | Production asset bundle + kernel container cache compilation |
 | `spinx driver:swap <roadrunner\|swoole>` | Instantly switch runtime driver in `spinx.json` |

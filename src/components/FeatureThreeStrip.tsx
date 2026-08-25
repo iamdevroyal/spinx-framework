@@ -35,10 +35,12 @@ app/
       title: 'DI resolved at the boundary',
       description:
         'Services are wired in `module.php` and resolved per request through a scoped container — no service locator reaching across modules.',
-      detailCode: `// Scoped Module DI Registration:
-$module->bind(InvoiceService::class, fn($c) => new InvoiceService(
-    $c->get(InvoiceRepository::class)
-));`,
+      detailCode: `// Scoped Module DI Registration in module.php:
+'services' => static function (ContainerBuilder $c, string $dir): void {
+    $c->register(InvoiceService::class)
+        ->setAutowired(true)
+        ->setPublic(true);
+};`,
     },
     {
       icon: <ShieldCheck className="text-[#E11D63] w-6 h-6" />,
@@ -47,8 +49,8 @@ $module->bind(InvoiceService::class, fn($c) => new InvoiceService(
       description:
         'A request-scoped container and a shipped static-analysis rule catch static/singleton leaks before they reach a persistent worker in production.',
       detailCode: `// Static Analysis Guard against leaks:
-spinx analyze --check-state-leaks
-✔ 0 leaks detected across RoadRunner worker pool`,
+vendor/bin/phpstan analyse
+✔ [NoMutableStaticStateRule] 0 leaks across worker pool`,
     },
   ];
 

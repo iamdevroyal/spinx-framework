@@ -15,9 +15,9 @@ export const DocsModal: React.FC<DocsModalProps> = ({ isOpen, onClose }) => {
   const topics = [
     { id: 'getting-started', title: 'Getting Started', category: 'Basics', icon: <Terminal size={14} /> },
     { id: 'module-architecture', title: 'Module Architecture', category: 'Core', icon: <Layers size={14} /> },
-    { id: 'routing-auth', title: 'Routing & Auth Gates', category: 'Http', icon: <Shield size={14} /> },
+    { id: 'routing-auth', title: 'Routing & Authentication', category: 'Http', icon: <Shield size={14} /> },
     { id: 'queues-scheduler', title: 'Queues & Scheduler', category: 'Workers', icon: <Zap size={14} /> },
-    { id: 'inertia-frontend', title: 'Vue & React Inertia', category: 'Frontend', icon: <Code size={14} /> },
+    { id: 'islands-frontend', title: 'Templates & Island Hydration', category: 'Frontend', icon: <Code size={14} /> },
   ];
 
   const docsContent: Record<string, { title: string; desc: string; code: string; notes: string }> = {
@@ -29,7 +29,7 @@ $ cd my-app
 $ spinx serve
 
 # Output:
-# ➜ Backend   http://localhost:8000  (RoadRunner v3.8)
+# ➜ Backend   http://localhost:8080  (RoadRunner)
 # ➜ Frontend  http://localhost:5173  (Vite · Vue HMR)`,
       notes: 'No separate web server (Nginx/Apache) or PHP-FPM configuration is needed for development or production.',
     },
@@ -38,52 +38,64 @@ $ spinx serve
       desc: 'Spinx strictly organizes code into DDD Domain Modules. The kernel forbids placing controllers or entities outside module domain boundaries.',
       code: `// spinx.json module registration
 {
-  "modules": ["Billing", "Auth", "Catalog"]
+  "modules": {
+    "Billing": true,
+    "Catalog": true
+  }
 }
 
 // Controller definition inside module:
 namespace App\\Modules\\Billing\\Infrastructure\\Http\\Controllers;
 
-class InvoiceController
-{
+final class InvoiceController {
     public function __construct(
-        private InvoiceService $invoices
+        private InvoiceRepositoryInterface $invoices
     ) {}
 }`,
       notes: 'Dependencies between modules must pass through declared Service Contracts to maintain boundary isolation.',
     },
     'routing-auth': {
-      title: 'Route Gates & Auth Middleware',
-      desc: 'Declare authentication and authorization constraints directly on the route. Self-documenting route definitions sync route contracts with what the kernel enforces.',
+      title: 'Fluent Routing & Built-In Auth',
+      desc: 'Declare routes with the fluent DSL in module.php. The Auth subsystem provides Auth::attempt(), session fixation defense, and "auth"/"guest" middleware aliases.',
       code: `use App\\Modules\\Billing\\Infrastructure\\Http\\Controllers\\InvoiceController;
+use Spinx\\Auth\\Middleware\\AuthMiddleware;
+use Spinx\\Routing\\{AliasRegistry, Route, RouteBuilder};
 
-Route::get('/invoices/{invoiceId}', [InvoiceController::class, 'show'])
-    ->middleware('auth:session')
-    ->can('view-invoice');`,
-      notes: 'Guards are evaluated in-memory within 0.1ms with zero database round-trip overhead on cached JWT/session contexts.',
+return [
+    'controllers' => static fn (AliasRegistry $r) => $r->registerController('invoice_show', InvoiceController::class),
+    'middlewares' => static fn (AliasRegistry $r) => $r->registerMiddleware('auth', AuthMiddleware::class),
+    'routes' => static function (RouteBuilder $routes): void {
+        Route::get(['invoices.show', '/invoices/{id}'])
+            ->middleware(['auth'])
+            ->controller('invoice_show');
+    },
+];`,
+      notes: 'Session and Auth state are scoped per-request and never leak across worker cycles.',
     },
     'queues-scheduler': {
-      title: 'Coroutine-Safe Queues & Task Scheduler',
-      desc: 'Spinx queues and schedulers execute outside the request cycle using non-blocking coroutines.',
+      title: 'Database Queues & Task Scheduler',
+      desc: 'Spinx queues and schedulers execute outside the request cycle cleanly.',
       code: `// Offloading async work:
-$app->queue()->push(new SendInvoiceEmail($invoiceId));
+$queueManager->dispatch(new SendInvoiceEmailJob($invoiceId));
 
-// Registering scheduled jobs:
-$app->scheduler()
-    ->job(ReconcileInvoices::class)
-    ->daily();`,
-      notes: 'Queues automatically retry failed jobs with exponential backoff and dead-letter queue logging.',
+// Registering scheduled jobs in schedule.php:
+return static function (Scheduler $scheduler, $container): void {
+    $scheduler->call(function () use ($container) {
+        $container->get(ReconcileService::class)->reconcile();
+    }, 'daily reconciliation')->daily('02:00');
+};`,
+      notes: 'A single OS cron entry invoking `spinx schedule:run` executes all due tasks.',
     },
-    'inertia-frontend': {
-      title: 'Vue & React Inertia Integration',
-      desc: 'Serve Vue or React single-page components directly from Spinx PHP controllers without building separate REST or GraphQL endpoints.',
-      code: `public function show(Request $request, string $invoiceId): Response
-{
-    return Inertia::render('Invoices/Show', [
-        'invoice' => $this->invoices->find($invoiceId),
-    ]);
-}`,
-      notes: 'Props are automatically serialized and hydrated into reactive Vue or React component props on client navigation.',
+    'islands-frontend': {
+      title: 'Server Templates & Island Hydration',
+      desc: 'Render lightning-fast server HTML with @island directives for reactive Vue 3 or React 19 client components.',
+      code: `<div class="invoice-view">
+    <h1>Invoice #{{ $invoice->id }}</h1>
+
+    <!-- Targeted client hydration island (Vue/React) -->
+    @island('InvoiceViewer', ['invoiceId' => $invoice->id])
+</div>`,
+      notes: 'Components are automatically bundled and hydrated via Vite with instant hot module replacement.',
     },
   };
 

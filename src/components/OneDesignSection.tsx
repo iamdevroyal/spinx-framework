@@ -18,101 +18,109 @@ export const OneDesignSection: React.FC<OneDesignSectionProps> = ({
     {
       id: 'runtime',
       label: 'RUNTIME ADAPTERS',
-      filename: 'bootstrap/app.php',
-      code: `$app = SpinxApp::boot();
+      filename: 'public/index.php',
+      code: `use Spinx\\Kernel\\Kernel;
+use Symfony\\Component\\HttpFoundation\\Request;
 
-$app->module('Billing')
-    ->routes()
-    ->service(InvoiceService::class)
-    ->repository(InvoiceRepository::class, EloquentInvoiceRepository::class);
+// Boot kernel once per worker process
+$kernel = new Kernel($projectRoot);
+$kernel->boot();
 
-$app->driver('roadrunner'); // or 'swoole', same contract either way
-
-$app->run();`,
+// Single-digit microsecond request dispatch
+$response = $kernel->handle($request);`,
     },
     {
       id: 'module',
       label: 'MODULE SYSTEM',
       filename: 'app/Modules/Billing/module.php',
-      code: `return [
-    'name' => 'Billing',
-    'namespace' => 'App\\\\Modules\\\\Billing',
-    'providers' => [
-        BillingServiceProvider::class,
-    ],
-    'exports' => [
-        InvoiceService::class,
-    ],
+      code: `use App\\Modules\\Billing\\Infrastructure\\Http\\Controllers\\InvoiceController;
+use Spinx\\Auth\\Middleware\\AuthMiddleware;
+use Spinx\\Routing\\{AliasRegistry, Route, RouteBuilder};
+
+return [
+    'controllers' => static fn(AliasRegistry $r) => $r->registerController('invoice_show', InvoiceController::class),
+    'middlewares' => static fn(AliasRegistry $r) => $r->registerMiddleware('auth', AuthMiddleware::class),
+    'routes' => static function (RouteBuilder $routes): void {
+        Route::get(['invoices.show', '/invoices/{id}'])
+            ->middleware(['auth'])
+            ->controller('invoice_show');
+    },
 ];`,
     },
     {
       id: 'auth',
       label: 'AUTHENTICATION',
       filename: 'config/auth.php',
-      code: `$app->auth()->configure([
-    'default_guard' => 'session',
-    'guards' => [
-        'session' => ['driver' => 'cookie_session'],
-        'api' => ['driver' => 'jwt_bearer', 'ttl' => 3600],
-    ],
-    'routes_gated_by_default' => true,
-]);`,
+      code: `// config/auth.php
+return [
+    'model' => \\App\\Modules\\Users\\Infrastructure\\Persistence\\Models\\User::class,
+    'password_field' => 'password',
+    'redirect_to' => '/login',
+];
+
+// In Controllers:
+if (Auth::attempt(['email' => $email, 'password' => $password])) {
+    $currentUser = Auth::user();
+}`,
     },
     {
       id: 'data',
       label: 'DATA ACCESS',
-      filename: 'config/database.php',
-      code: `$orm = $app->database();
-
-$orm->configurePool([
-    'min_connections' => 5,
-    'max_connections' => 50,
-    'idle_timeout' => 30,
-    'coroutine_safe' => true,
-]);`,
+      filename: 'app/Modules/Billing/Application/GetInvoices.php',
+      code: `// Coroutine-safe active record with pre-compiled schema cache
+$invoices = Invoice::query()
+    ->selectWithout('secret_signature')
+    ->where('status', 'paid')
+    ->when($hasFilter)->then(fn($q) => $q->where('total', '>', 500))
+    ->with('customer', 'lineItems')
+    ->get();`,
     },
     {
       id: 'queues',
       label: 'QUEUES & SCHEDULER',
-      filename: 'bootstrap/queue.php',
-      code: `$app->queue()->registerWorkers([
-    'default' => ['concurrency' => 10],
-    'high-priority' => ['concurrency' => 25],
-]);
+      filename: 'schedule.php',
+      code: `use Spinx\\Schedule\\Scheduler;
+use Spinx\\Queue\\QueueManager;
 
-$app->scheduler()->everyFiveMinutes(ProcessMetrics::class);`,
+return static function (Scheduler $scheduler, $container): void {
+    $scheduler->call(function () use ($container) {
+        $container->get(QueueManager::class)->dispatch(new PruneOrdersJob());
+    }, 'daily cleanup')->daily('03:00');
+};`,
     },
     {
-      id: 'inertia',
-      label: 'INERTIA / VUE / REACT',
-      filename: 'resources/js/app.ts',
-      code: `$app->inertia()->setup([
-    'frontend' => 'vue', // or 'react'
-    'root_view' => 'app.blade.php',
-    'ssr' => true,
-]);`,
+      id: 'islands',
+      label: 'TEMPLATES & ISLANDS',
+      filename: 'Infrastructure/Http/Views/invoice.spinx.html',
+      code: `<div class="invoice-container">
+    <h1>Invoice #{{ $invoice->id }}</h1>
+    
+    <!-- Targeted client-side reactive island (Vue 3 / React 19) -->
+    @island('PaymentWidget', ['invoiceId' => $invoice->id, 'amount' => $invoice->amount])
+</div>`,
     },
     {
       id: 'previewer',
       label: 'NATIVE PREVIEWER',
-      filename: 'spinx.json',
-      code: `{
-  "previewer": {
-    "desktop": { "enabled": true, "width": 1280, "height": 800 },
-    "mobile": { "enabled": true, "viewport": "iphone-15-pro" }
-  }
-}`,
+      filename: 'Terminal Command',
+      code: `# Launch interactive browser-based mobile preview container:
+php spinx preview --mobile
+
+# Preview on connected Android device or emulator:
+php spinx preview --android
+
+# Launch native desktop webview window:
+php spinx preview --desktop`,
     },
     {
       id: 'mobile',
-      label: 'MOBILE COMPILATION',
-      filename: 'bootstrap/native.php',
-      code: `// Go-based native compiler target configuration
-$app->native()->compile([
-    'target' => 'ios', // or 'android', 'macos'
-    'bundle_id' => 'com.spinx.app',
-    'embedded_php' => true,
-]);`,
+      label: 'MOBILE SHELLS',
+      filename: 'Terminal Command',
+      code: `# Scaffold native Android shell project (Kotlin + WebView):
+php spinx build:mobile --android
+
+# Scaffold native iOS shell project (Swift + WKWebView):
+php spinx build:mobile --ios`,
     },
   ];
 
