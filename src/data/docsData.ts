@@ -158,11 +158,17 @@ By eliminating traditional PHP-FPM per-request bootstrap overhead, Spinx hosts y
       {
         headingId: 'installation-steps',
         headingTitle: 'Standard Installation',
-        content: `Spinx projects are created using the \`spinx new\` CLI command:`,
+        content: `You can initialize a new Spinx project using Composer or the Spinx CLI:`,
         codeSnippet: {
           title: 'Terminal - Project Initialization',
           language: 'bash',
-          code: `spinx new my-app
+          code: `# Option 1: Via Composer (Recommended)
+composer create-project spinxphp/framework my-app
+cd my-app
+php spinx serve
+
+# Option 2: Via Spinx CLI
+spinx new my-app --frontend=vue
 cd my-app
 spinx serve`,
         },
