@@ -99,15 +99,22 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const frameworkItems = [
+    { title: 'Quickstart & Install', desc: 'Create your first Spinx application with spinx new', path: '/docs/quickstart' },
     { title: 'Core Architecture', desc: 'Kernel boot, module isolation & request context', path: '/docs/architecture' },
     { title: 'RoadRunner & Swoole', desc: 'High-throughput async persistent worker runtimes', path: '/docs/architecture' },
-    { title: 'Island Hydration', desc: 'Vue & React selective client island hydration', path: '/docs/inertia-setup' },
+    { title: 'Island Hydration', desc: 'Vue & React selective client island hydration', path: '/docs/templating-islands' },
   ];
 
   const resourcesDropdownItems = [
     {
+      title: 'Quickstart Guide',
+      subtitle: 'Installation, system requirements & spinx new',
+      icon: <Terminal size={16} className="text-[#E11D63]" />,
+      path: '/docs/quickstart',
+    },
+    {
       title: 'Documentation',
-      subtitle: 'Core architecture, installation & DDD guides',
+      subtitle: 'Core architecture, routing DSL & DDD guides',
       icon: <BookOpen size={16} className="text-[#E11D63]" />,
       path: '/docs/introduction',
     },
@@ -118,14 +125,8 @@ export const Navbar: React.FC<NavbarProps> = ({
       path: '/docs/guides/saas-quickstart',
     },
     {
-      title: 'Examples',
-      subtitle: 'High-throughput microservices & proxies',
-      icon: <Sparkles size={16} className="text-[#E11D63]" />,
-      path: '/docs/guides/microservice',
-    },
-    {
-      title: 'API References',
-      subtitle: 'CLI commands, spinx.json schema & parameters',
+      title: 'CLI Reference',
+      subtitle: 'All 24 CLI commands, generators & previewers',
       icon: <Terminal size={16} className="text-[#E11D63]" />,
       path: '/docs/cli-reference',
     },

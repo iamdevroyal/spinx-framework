@@ -15,9 +15,9 @@ export const InstallStrip: React.FC<InstallStripProps> = ({
   const [copied, setCopied] = useState(false);
 
   const installCommands = {
-    composer: `spinx new my-app\ncd my-app\nspinx serve`,
-    cli: `spinx new my-app --template=saas\ncd my-app\nspinx dev`,
-    docker: `docker run -d -p 8080:8080 spinx/runtime:latest\ncurl http://localhost:8080/health`,
+    composer: `composer create-project spinxphp/spinx my-app\ncd my-app\nspinx serve`,
+    cli: `spinx new my-app --frontend=vue\ncd my-app\nspinx serve`,
+    docker: `docker run -d -p 8080:8080 spinxphp/runtime:latest\ncurl http://localhost:8080/health`,
   };
 
   const commandText = installCommands[activeTab];
