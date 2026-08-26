@@ -5,6 +5,7 @@ import { HeroSection } from './components/HeroSection';
 import { FeatureThreeStrip } from './components/FeatureThreeStrip';
 import { OneDesignSection } from './components/OneDesignSection';
 import { OneConfigSection } from './components/OneConfigSection';
+import { AiBuilderSection } from './components/AiBuilderSection';
 import { DeepDiveSection } from './components/DeepDiveSection';
 import { CtaBanner } from './components/CtaBanner';
 import { BuiltForHardPartsSection } from './components/BuiltForHardPartsSection';
@@ -83,6 +84,11 @@ export default function App() {
             />
 
             <OneConfigSection
+              onOpenDocs={handleOpenDocs}
+              onOpenPlayground={handleOpenPlayground}
+            />
+
+            <AiBuilderSection
               onOpenDocs={handleOpenDocs}
               onOpenPlayground={handleOpenPlayground}
             />

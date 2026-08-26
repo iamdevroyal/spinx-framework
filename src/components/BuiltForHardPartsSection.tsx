@@ -9,7 +9,8 @@ import {
   Layout,
   Smartphone,
   CheckCircle,
-  ChevronDown
+  ChevronDown,
+  Bot
 } from 'lucide-react';
 
 interface BuiltForHardPartsSectionProps {
@@ -22,6 +23,13 @@ export const BuiltForHardPartsSection: React.FC<BuiltForHardPartsSectionProps> =
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
 
   const cards = [
+    {
+      icon: <Bot size={20} className="text-[#E11D63]" />,
+      title: 'AI framework builder',
+      description: 'Autonomous multi-agent builder wired to the kernel — inspects frontend views and sibling modules to generate DDD modules with zero guessing.',
+      badge: 'AI-Native',
+      details: 'Ai::build() orchestrates Architect, Database, Routing, and Frontend agents with bidirectional context grounding and strict DDD linting.',
+    },
     {
       icon: <Server size={20} className="text-[#E11D63]" />,
       title: 'Runtime driver',

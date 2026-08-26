@@ -11,111 +11,126 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   onOpenPlayground,
   onOpenDocs,
 }) => {
-  const [activeTab, setActiveTab] = useState<'routing' | 'auth' | 'queue' | 'validation' | 'di' | 'orm'>('routing');
+  const [activeTab, setActiveTab] = useState<'ai' | 'routing' | 'auth' | 'validation' | 'cache' | 'orm'>('ai');
   const [copied, setCopied] = useState(false);
 
   const heroTabs = [
-    { id: 'routing', name: 'Routing' },
-    { id: 'auth', name: 'Authentication' },
-    { id: 'queue', name: 'Queue' },
-    { id: 'validation', name: 'Validation' },
-    { id: 'di', name: 'Dependency Injection' },
-    { id: 'orm', name: 'ORM' },
+    { id: 'ai', name: 'AI Builder' },
+    { id: 'routing', name: 'Routing & Facades' },
+    { id: 'auth', name: 'Strict DDD Auth' },
+    { id: 'validation', name: 'Validation (40+)' },
+    { id: 'cache', name: 'Caching' },
+    { id: 'orm', name: 'Active Record ORM' },
   ] as const;
 
   const codeSnippets: Record<typeof activeTab, { filename: string; code: string }> = {
+    ai: {
+      filename: 'terminal / php spinx ai:build',
+      code: `// Autonomous Multi-Agent Framework Builder
+use Spinx\\Ai\\Ai;
+
+// Build a complete, production-ready module in strict DDD:
+Ai::build('Create a Subscription Billing module with Stripe checkout, webhook verification, plan repository, and dashboard view');
+
+// Output:
+//  ✔ ArchitectAgent: Generated Domain Entity & Repository Contract
+//  ✔ DatabaseAgent: Created 2026_08_08_000001_create_plans_table.php
+//  ✔ RoutingAgent: Generated BillingController with Request::validate()
+//  ✔ FrontendAgent: Crafted checkout.spinx.html with @island hydration
+//  ✔ CodeAnalyzer: 100% DDD compliance verified with 0 leaks`,
+    },
     routing: {
       filename: 'app/Modules/Projects/module.php',
       code: `use App\\Modules\\Projects\\Infrastructure\\Http\\Controllers\\ProjectController;
-use Spinx\\Auth\\Middleware\\AuthMiddleware;
-use Spinx\\Routing\\{AliasRegistry, Route, RouteBuilder};
+use Spinx\\Routing\\{Route, RouteBuilder};
 
 return [
-    'controllers' => static function (AliasRegistry $r): void {
-        $r->registerController('project_show', ProjectController::class);
-    },
-    'middlewares' => static function (AliasRegistry $r): void {
-        $r->registerMiddleware('auth', AuthMiddleware::class);
+    'controllers' => static function ($r): void {
+        $r->registerController('project', ProjectController::class);
     },
     'routes' => static function (RouteBuilder $routes): void {
-        Route::get(['projects.show', '/projects/{id}'])
-            ->middleware(['auth'])
-            ->controller('project_show');
+        // Multi-Action Controller Routing with Session CSRF
+        Route::get(['projects.index', '/projects'])
+            ->middleware(['auth', 'csrf'])
+            ->controller('project@index');
+
+        Route::post(['projects.store', '/projects'])
+            ->middleware(['auth', 'csrf'])
+            ->controller('project@store');
     },
 ];`,
     },
     auth: {
-      filename: 'app/Modules/Auth/Infrastructure/Http/Controllers/LoginController.php',
-      code: `use Spinx\\Auth\\{Auth, Hash};
-use Symfony\\Component\\HttpFoundation\\{Request, JsonResponse};
+      filename: 'app/Modules/Auth/Infrastructure/Http/Controllers/AuthController.php',
+      code: `use App\\Modules\\Auth\\Application\\Services\\AuthService;
+use Spinx\\Http\\Request;
+use Spinx\\Http\\Response;
 
-final class LoginController
+final class AuthController
 {
-    public function __invoke(Request $request): JsonResponse
-    {
-        $credentials = [
-            'email' => $request->request->get('email'),
-            'password' => $request->request->get('password'),
-        ];
+    public function __construct(private readonly AuthService $authService) {}
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            return new JsonResponse(['user' => ['id' => $user->id, 'email' => $user->email]]);
+    public function login(): Response
+    {
+        $data = Request::validate([
+            'email'    => 'required|email|max:255',
+            'password' => 'required|string|min:8',
+        ]);
+
+        if ($this->authService->login($data['email'], $data['password'])) {
+            return redirect('/dashboard');
         }
 
-        return new JsonResponse(['error' => 'Invalid credentials'], 401);
+        return view('Auth::login', ['error' => 'Invalid credentials'], 401);
     }
 }`,
     },
-    queue: {
-      filename: 'app/Modules/Billing/Application/DispatchWebhook.php',
-      code: `use Spinx\\Queue\\QueueManager;
-use App\\Modules\\Billing\\Application\\Jobs\\ProcessWebhookJob;
-
-// Dispatch database-backed background jobs asynchronously
-$queueManager->dispatch(new ProcessWebhookJob(
-    event: 'invoice.payment_succeeded',
-    customerId: 'cust_8921x',
-    amount: 4900
-));`,
-    },
     validation: {
-      filename: 'app/Modules/Projects/Infrastructure/Http/Controllers/StoreProjectController.php',
-      code: `use Spinx\\Validation\\Validator;
+      filename: 'app/Modules/Projects/Infrastructure/Http/Controllers/ProjectController.php',
+      code: `use Spinx\\Http\\Request;
 
-// Explicit, allowlist validation with UTF-8 mb_strlen & rich rules
-$data = Validator::make($request->request->all(), [
-    'name' => 'required|string|max:255',
-    'tier' => 'required|in:starter,growth,enterprise',
-    'email' => 'nullable|email',
-    'password' => 'required|min:8|confirmed',
-])->validate(); // Returns strictly allowed attributes or throws ValidationException`,
+// 40+ Built-In Validation Rules with Type Safety
+$validated = Request::validate([
+    'name'     => 'required|string|min:3|max:100',
+    'slug'     => 'required|alpha_dash|unique:projects,slug',
+    'email'    => 'required|email',
+    'tier'     => 'required|in:starter,growth,enterprise',
+    'budget'   => 'required|numeric|gt:0',
+    'deadline' => 'nullable|date|after:today',
+]); // Returns allowlisted payload or throws ValidationException`,
     },
-    di: {
-      filename: 'app/Modules/Billing/module.php',
-      code: `use Symfony\\Component\\DependencyInjection\\ContainerBuilder;
-use App\\Modules\\Billing\\Domain\\InvoiceRepositoryInterface;
-use App\\Modules\\Billing\\Infrastructure\\Persistence\\InvoiceRepository;
+    cache: {
+      filename: 'app/Modules/Catalog/Application/Services/ProductService.php',
+      code: `use Spinx\\Cache\\Cache;
 
-return [
-    'services' => static function (ContainerBuilder $container, string $moduleDir): void {
-        // Enforced request-scoping applied automatically to module services
-        $container->register(InvoiceRepositoryInterface::class, InvoiceRepository::class)
-            ->setAutowired(true)
-            ->setPublic(true);
-    },
-];`,
+// High-throughput caching with File, Array, and Redis stores:
+$featured = Cache::remember('products:featured', 3600, function () {
+    return Product::query()->where('is_featured', true)->get();
+});
+
+// Helper shorthand:
+cache(['site:maintenance' => false], 300);
+$isDown = cache('site:maintenance');`,
     },
     orm: {
-      filename: 'app/Modules/Projects/Application/ListProjects.php',
-      code: `// Coroutine-safe Active-Record ORM with batched eager loading
-$projects = Project::query()
-    ->selectWithout('secret_token', 'internal_notes')
-    ->where('status', 'active')
-    ->when($hasFilter)->then(fn($q) => $q->where('total', '>', 500))
-    ->with('team', 'deployments')
-    ->latest()
-    ->paginate(25);`,
+      filename: 'app/Modules/Projects/Infrastructure/Persistence/Models/Project.php',
+      code: `use Spinx\\Database\\Model;
+
+final class Project extends Model
+{
+    protected static string $table = 'projects';
+    protected array $fillable = ['name', 'slug', 'tier', 'budget'];
+
+    // Pre-compiled DBAL column cache eliminates runtime schema queries
+    public static function findActive(): array
+    {
+        return self::query()
+            ->where('budget', '>=', 1000)
+            ->with('team', 'deployments')
+            ->latest()
+            ->paginate(25);
+    }
+}`,
     },
   };
 

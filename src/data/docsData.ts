@@ -7,7 +7,7 @@ export interface DocHeading {
 export interface DocArticle {
   id: string;
   path: string;
-  category: 'Getting Started' | 'Core Concepts' | 'Backend & Services' | 'Frontend & Islands' | 'API & Reference' | 'Guides & Examples';
+  category: 'Getting Started' | 'AI Builder' | 'Core Concepts' | 'Backend & Services' | 'Frontend & Islands' | 'API & Reference' | 'Guides & Examples';
   title: string;
   subtitle: string;
   description: string;
@@ -38,6 +38,7 @@ export interface DocArticle {
 
 export const DOC_CATEGORIES = [
   'Getting Started',
+  'AI Builder',
   'Core Concepts',
   'Backend & Services',
   'Frontend & Islands',
@@ -46,28 +47,30 @@ export const DOC_CATEGORIES = [
 ] as const;
 
 export const DOCS_DATA: DocArticle[] = [
+  // ─────────────────────────────────────────────────────────────────────────
+  // 1. Introduction
+  // ─────────────────────────────────────────────────────────────────────────
   {
     id: 'introduction',
     path: '/docs/introduction',
     category: 'Getting Started',
     title: 'Introduction to Spinx Framework',
-    subtitle: 'The modern PHP engine for high-concurrency coroutines, enforced DDD architecture, and reactive island hydration.',
-    description: 'Spinx is a next-generation full-stack PHP framework engineered for extreme performance, clean domain-driven architecture, and seamless island hydration with Vue and React.',
+    subtitle: 'The modern PHP engine for persistent workers, enforced DDD architecture, and reactive island hydration.',
+    description: 'Spinx is a next-generation full-stack PHP framework engineered for extreme performance, clean domain-driven architecture, and autonomous AI-assisted development.',
     readTime: '5 min read',
-    lastUpdated: 'v1.0.0 (Production Ready)',
+    lastUpdated: 'v1.0.16 (Latest)',
     badge: 'Core Reference',
     headings: [
       { id: 'overview', title: 'Framework Overview', level: 2 },
       { id: 'core-pillars', title: 'Core Architecture Pillars', level: 2 },
-      { id: 'scope-non-goals', title: 'Scope & Architecture Guarantees', level: 2 },
+      { id: 'scope-guarantees', title: 'Scope & Architecture Guarantees', level: 2 },
       { id: 'positioning-matrix', title: 'Comparison & Positioning Matrix', level: 2 },
-      { id: 'gotcha-mental-shift', title: 'What Could Go Wrong: Mental Shift', level: 2 },
     ],
     sections: [
       {
         headingId: 'overview',
         headingTitle: 'Framework Overview',
-        content: `Spinx is a PHP framework for applications that demand near-Node.js performance, zero-friction cross-platform installation, and an enforced Domain-Driven Design (DDD) architecture from the first command run.
+        content: `Spinx is a modern PHP framework for applications that demand near-Node.js performance, zero-friction cross-platform installation, and an enforced Domain-Driven Design (DDD) architecture from the first command run.
 
 By eliminating traditional PHP-FPM per-request bootstrap overhead, Spinx hosts your application inside long-running execution workers (RoadRunner out of the box, Swoole coroutines opt-in). Route matching, container resolution, and database connections remain warmed in RAM across requests, serving thousands of requests per second with microsecond latency.`,
         codeSnippet: {
@@ -80,6 +83,7 @@ By eliminating traditional PHP-FPM per-request bootstrap overhead, Spinx hosts y
   "modules": {
     "Health": true,
     "Todo": true,
+    "Auth": true,
     "Billing": true
   }
 }`,
@@ -93,959 +97,747 @@ By eliminating traditional PHP-FPM per-request bootstrap overhead, Spinx hosts y
       {
         headingId: 'core-pillars',
         headingTitle: 'Core Architecture Pillars',
-        content: `Spinx is built on five core technical pillars designed for long-term project maintainability and extreme throughput:
+        content: `Spinx is built on six technical pillars designed for long-term project maintainability and extreme throughput:
 
 1. Speed: Persistent-process runtime (RoadRunner default, Swoole opt-in) with no per-request bootstrap cost.
-2. Portability: Runs on Windows, Linux, and macOS with a single install step — no compiled C extensions required by default.
-3. Enforced Architecture: DDD module layout is not an optional convention; it is structurally the only way the kernel registers code.
-4. Island Hydration: Server-rendered HTML templates with targeted client-side hydration islands (@island) for Vue 3 and React 19.
-5. Native Reach: Built-in desktop and mobile previewers (spinx preview --mobile) and scaffolders for native Android and iOS shells.`,
+2. AI-Native Autonomy: Inbuilt AI Builder powered by Anthropic Claude Sonnet 4.6 that understands Spinx core architecture, orchestrating multi-agent project scaffolding via CLI and Web UI.
+3. Enforced DDD Architecture: Domain entities, repository interfaces, application services, and infrastructure are strictly isolated per module.
+4. Multi-Action Controllers & Facades: Group related routes in clean multi-action controllers using Request, Response, JsonResponse, and View facades.
+5. Session-Backed Security: Integrated stateful sessions, session-backed CSRF protection with token rotation, and auth guards.
+6. Reactive Island Hydration: Server-rendered HTML templates with targeted client-side hydration islands (@island) for Vue 3 and React 19.`,
       },
       {
-        headingId: 'scope-non-goals',
+        headingId: 'scope-guarantees',
         headingTitle: 'Scope & Architecture Guarantees',
         content: `Spinx provides an integrated suite of framework subsystems designed for long-running runtimes:
 
 • Persistent Runtime Isolation: Single-boot kernel with RequestScope container tracking to eliminate memory leaks across requests.
 • DBAL-Based Active Record: Eloquent-shaped ergonomics with pre-compiled schema column caching, upsert support, and row locking.
-• Built-In Auth & Session: Stateful session management (File/Database) safe for persistent workers, with session-fixation protection.
-• In-Framework Scheduler: Cron expressions declared fluently in schedule.php, driven by a single OS cron entry.
-• Automatic OpenAPI: Reflection-based OpenAPI 3.1 schema generation from routes and PHP 8 attributes.`,
+• Caching Subsystem: File, Array, and Redis cache drivers with Cache facade and global cache() helper.
+• Robust Validation: 40+ validation rules with Validate facade and Request::validate().
+• In-Framework Scheduler & Queue: Database-backed jobs and cron expressions declared fluently in schedule.php.`,
       },
       {
         headingId: 'positioning-matrix',
         headingTitle: 'Comparison & Positioning Matrix',
         content: `How Spinx compares against established PHP framework alternatives:`,
         tableData: {
-          headers: ['Framework', 'Good at', 'Spinx Difference'],
+          headers: ['Feature', 'Spinx (v1.0.16)', 'Laravel (Octane / FPM)', 'Symfony'],
           rows: [
-            ['Laravel', 'Batteries-included web apps, mature ecosystem, Eloquent ORM', 'Enforces DDD modules at kernel level; defaults to persistent worker runtime over PHP-FPM with zero-drift state safety'],
-            ['Symfony', 'Enterprise components, HTTP kernel, DI flexibility', 'Full opinionated full-stack framework with out-of-the-box auth, records, queues, scheduler, and Vite islands'],
-            ['Slim / Lumen', 'Lightweight micro-APIs, minimal footprint', 'Full-featured architecture with DDD boundaries, persistent performance, and interactive mobile preview tools'],
+            ['Runtime Architecture', 'Persistent RoadRunner / Swoole default', 'PHP-FPM default (Octane add-on)', 'PHP-FPM default'],
+            ['Architecture Enforcement', 'Strict DDD enforced by Kernel', 'Freeform MVC convention', 'Flexible bundles / directories'],
+            ['AI Builder', 'Inbuilt Multi-Agent Claude Sonnet 4.6', 'None (Third-party plugins)', 'None'],
+            ['Controller Paradigm', 'Multi-Action & Facades (Request, Response, View)', 'Controllers & FormRequests', 'Action Controllers'],
+            ['Frontend Hydration', 'Zero-build HTML + Vue/React @island', 'Blade + Inertia / Livewire', 'Twig + Stimulus / UX'],
+            ['CSRF & Sessions', 'Session-backed with cookie sync', 'Session-backed', 'Session-backed'],
+            ['Column Cache', 'Pre-compiled DBAL schema (0ms queries)', 'Dynamic reflection queries', 'ORM Metadata cache'],
           ],
         },
       },
-      {
-        headingId: 'gotcha-mental-shift',
-        headingTitle: 'What Could Go Wrong: Mental Shift',
-        content: `The enforced module system means code that "just works" in a loosely structured app will not be discovered by Spinx until placed inside a valid module under app/Modules/<Name>/module.php. Budget time for this architectural discipline.`,
-        callout: {
-          type: 'warning',
-          title: 'What Could Go Wrong',
-          message: 'Autodiscovery requires code to live inside an active module. Placing loose controllers in app/Controllers will result in 404 routes during kernel boot.',
-        },
-      },
     ],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 2. Inbuilt AI Framework Builder
+  // ─────────────────────────────────────────────────────────────────────────
   {
-    id: 'quickstart',
-    path: '/docs/quickstart',
-    category: 'Getting Started',
-    title: 'Installation & Quickstart',
-    subtitle: 'Zero manual steps beyond spinx new to get your first Spinx app live.',
-    description: 'Get up and running with Spinx on Windows, Linux, or macOS. Learn installer mechanics, system prerequisites, and how dev mode proxies Vite HMR.',
-    readTime: '4 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'Essential',
+    id: 'ai-builder',
+    path: '/docs/ai-builder',
+    category: 'AI Builder',
+    title: 'Inbuilt AI Framework Builder',
+    subtitle: 'Autonomous multi-agent development powered by Anthropic Claude Sonnet 4.6 directly inside your local environment.',
+    description: 'Spinx features an inbuilt AI Builder that maps directly to the framework core. Using specialized agents and persistent continuity memory, it scaffolds and refactors modules in strict DDD compliance.',
+    readTime: '7 min read',
+    lastUpdated: 'v1.0.16 (New Feature)',
+    badge: 'AI Native',
     headings: [
-      { id: 'installation-steps', title: 'Standard Installation', level: 2 },
-      { id: 'installer-automation', title: 'What the Installer Automates', level: 2 },
-      { id: 'system-requirements', title: 'System Requirements', level: 2 },
-      { id: 'running-dev-server', title: 'Running the Dev Server', level: 2 },
-      { id: 'gotcha-windows-swoole', title: 'What Could Go Wrong: Windows & Swoole', level: 2 },
+      { id: 'ai-overview', title: 'How Spinx AI Builder Works', level: 2 },
+      { id: 'agent-hierarchy', title: 'Specialized Multi-Agent Core', level: 2 },
+      { id: 'continuity-tracker', title: 'Continuity Tracker & Context Memory', level: 2 },
+      { id: 'cli-and-web-ui', title: 'CLI & Local Web UI Workflows', level: 2 },
+      { id: 'configuration', title: 'Configuration & Claude API Key', level: 2 },
     ],
     sections: [
       {
-        headingId: 'installation-steps',
-        headingTitle: 'Standard Installation',
-        content: `You can initialize a new Spinx project using Composer or the Spinx CLI:`,
-        codeSnippet: {
-          title: 'Terminal - Project Initialization',
-          language: 'bash',
-          code: `# Option 1: Via Composer (Recommended)
-composer create-project spinxphp/framework my-app
-cd my-app
-php spinx serve
+        headingId: 'ai-overview',
+        headingTitle: 'How Spinx AI Builder Works',
+        content: `Unlike external AI coding chat tools that generate generic PHP or struggle with framework architecture conventions, Spinx AI Builder is built directly into the kernel. It possesses full structural knowledge of Spinx modules, DDD boundaries, DBAL migrations, routing DSL, facades, and runtime lifecycles.
 
-# Option 2: Via Spinx CLI
-spinx new my-app --frontend=vue
-cd my-app
-spinx serve`,
+Developers can issue prompts via CLI (spinx ai:chat) or the local Web Dashboard (/_spinx/ai) to build complete features end-to-end.`,
+        codeSnippet: {
+          title: 'Terminal AI One-Shot Build',
+          language: 'bash',
+          code: `# Build an entire production-grade billing module with Stripe webhooks:
+php spinx ai:build "Create a Billing module with Customer entity, Subscription plan repository, Stripe webhook handler, and checkout views"`,
         },
       },
       {
-        headingId: 'installer-automation',
-        headingTitle: 'What the Installer Automates',
-        content: `When you execute \`spinx new my-app\`, Spinx's scaffolding engine automatically:
-1. Detects host OS and CPU architecture (Windows x64, macOS ARM64/x64, Linux x64).
-2. Downloads the matching RoadRunner binary into the project directory — eliminating compiled PECL C extensions for default installs.
-3. Scaffolds a complete \`spinx.json\` pre-configured with RoadRunner and Vue 3 frontend adapter.
-4. Generates an initial reference module skeleton (\`app/Modules/Health\`).`,
-      },
-      {
-        headingId: 'system-requirements',
-        headingTitle: 'System Requirements',
-        content: `• PHP 8.2 or newer (Spinx uses typed properties, readonly properties, and enums throughout its kernel).
-• ext-mbstring extension for UTF-8 string validation.
-• Node.js 18+ and npm/pnpm for the Vite frontend pipeline.
-• No compiled PHP C extensions required for the default RoadRunner runtime.`,
+        headingId: 'agent-hierarchy',
+        headingTitle: 'Specialized Multi-Agent Core',
+        content: `Spinx AI Builder uses an Orchestrator Agent that analyzes requirements and delegates to domain-specialized subagents:
+
+• Orchestrator Agent: Supervises project plans, tool executions, and step-by-step verification.
+• Architect Agent: Formulates DDD domain models, entity invariants, and repository contracts.
+• Database Agent: Writes migrations (Blueprint), DBAL schema, ORM models, and seeders.
+• Routing Agent: Generates multi-action controllers, Request::validate() rules, and responses.
+• Frontend Agent: Crafts .spinx.html templates, reactive islands, and CSS styling.
+• Security Agent: Wires session-backed CSRF, auth middleware, and rate limits.
+• DevOps Agent: Optimizes RoadRunner/Swoole configs, caching stores, queues, and crons.`,
         callout: {
           type: 'tip',
-          title: 'PHP 8.2+ Modern Typing',
-          message: 'Spinx leverages PHP 8.2 DNF types, readonly classes, and enum route parameters for strict contract enforcement.',
+          title: 'Strict DDD Enforced by AI',
+          message: 'The AI Builder will never place business logic in controllers or database calls in domain entities. It is strictly programmed with Spinx architecture rules.',
         },
       },
       {
-        headingId: 'running-dev-server',
-        headingTitle: 'Running the Dev Server',
-        content: `Executing \`spinx serve\` boots both the backend persistent worker runtime (RoadRunner/Swoole) and the Vite frontend dev server concurrently.
+        headingId: 'continuity-tracker',
+        headingTitle: 'Continuity Tracker & Context Memory',
+        content: `Spinx maintains persistent project context in .spinx/ai/continuity.json. Every module, migration, implemented feature, and architectural decision is remembered across sessions:
 
-Frontend edits trigger Instant Hot Module Replacement (HMR). Backend controller or route edits trigger automatic worker pool reloading.`,
-      },
-      {
-        headingId: 'gotcha-windows-swoole',
-        headingTitle: 'What Could Go Wrong: Windows & Swoole',
-        content: `The Swoole driver is not supported natively on Windows. For local Windows development, use the default RoadRunner driver or the official Spinx Docker container if targeting Swoole in production.`,
-        callout: {
-          type: 'warning',
-          title: 'What Could Go Wrong',
-          message: 'Running driver:swap swoole on native Windows without Docker will fail due to missing Unix socket support in Windows PECL.',
-        },
-      },
-    ],
-  },
-  {
-    id: 'architecture',
-    path: '/docs/architecture',
-    category: 'Core Concepts',
-    title: 'Runtime Layer, Kernel & State Safety',
-    subtitle: 'Understanding long-running persistent workers, request scoping, and zero-leak memory isolation.',
-    description: 'Deep dive into the ServerAdapter contract, Kernel compilation, RequestScope container wrappers, and static analysis guard rules.',
-    readTime: '7 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'Deep Dive',
-    headings: [
-      { id: 'adapter-contract', title: 'The ServerAdapter Contract', level: 2 },
-      { id: 'roadrunner-adapter', title: 'RoadRunnerAdapter (Default)', level: 2 },
-      { id: 'swoole-adapter', title: 'SwooleAdapter (Opt-In Coroutines)', level: 2 },
-      { id: 'kernel-lifecycle', title: 'Kernel Boot & Request Lifecycle', level: 2 },
-      { id: 'state-safety-layer', title: 'State Safety Layer & RequestScope', level: 2 },
-    ],
-    sections: [
-      {
-        headingId: 'adapter-contract',
-        headingTitle: 'The ServerAdapter Contract',
-        content: `All application code interacts with Symfony's \`HttpFoundation\` Request and Response objects. Every Spinx runtime driver implements the unified \`ServerAdapter\` interface, guaranteeing that swapping runtime engines never breaks application code.`,
+• Project Memory: Tracks high-level goals and completed milestones.
+• Schema State: Understands all active database tables and column types.
+• Dependency Graph: Knows all registered module services and aliases.`,
         codeSnippet: {
-          title: 'Spinx/Runtime/ServerAdapter.php',
-          language: 'php',
-          code: `namespace Spinx\\Runtime;
-
-use Symfony\\Component\\HttpFoundation\\{Request, Response};
-
-interface ServerAdapter
-{
-    public function boot(): void;
-    public function handle(Request $request): Response;
-    public function shutdown(): void;
+          title: '.spinx/ai/continuity.json - Context Snapshot',
+          language: 'json',
+          code: `{
+  "project": "E-Commerce Platform",
+  "modules": ["Auth", "Catalog", "Cart", "Checkout"],
+  "database": {
+    "tables": ["users", "products", "orders", "order_items"]
+  },
+  "decisions": [
+    "Used Argon2id for password hashing in AuthService",
+    "Cart items stored in Redis cache store with 7-day TTL"
+  ]
 }`,
         },
       },
       {
-        headingId: 'roadrunner-adapter',
-        headingTitle: 'RoadRunnerAdapter (Default)',
-        content: `RoadRunner uses a high-performance Go process supervisor that dispatches incoming HTTP requests over Unix sockets or named pipes to worker PHP processes. Each worker handles one request at a time sequentially.`,
+        headingId: 'cli-and-web-ui',
+        headingTitle: 'CLI & Local Web UI Workflows',
+        content: `Spinx provides dual interactive interfaces for AI development:
+
+1. CLI Interactive Chat:
+   Run 'php spinx ai:chat' to open a conversational terminal interface with colored agent logs and interactive diff confirmations.
+
+2. Local Web Builder UI:
+   Navigate to 'http://localhost:8080/_spinx/ai' or run 'php spinx ai:ui' to open the glassmorphism AI development studio with real-time streaming, visual diff reviews, and one-click file generation.`,
       },
       {
-        headingId: 'swoole-adapter',
-        headingTitle: 'SwooleAdapter (Opt-In Coroutines)',
-        content: `Swoole runs as a C extension within PHP, multiplexing concurrent requests within a single process via coroutines. Spinx provides coroutine-safe connection pooling to prevent socket corruption.`,
-      },
-      {
-        headingId: 'kernel-lifecycle',
-        headingTitle: 'Kernel Boot & Request Lifecycle',
-        content: `Kernel::boot() runs once at worker process startup:
-1. Loads environment variables (.env).
-2. Boots configuration store (\`Spinx\\Support\\Config\`).
-3. Compiles the Symfony DI container and warms cache to disk.
-4. Initializes DBAL connection managers and boots the pre-compiled SchemaCache.
-5. Boots Auth and Session subsystems.
-6. Compiles all module routes into a single Symfony RouteCollection.`,
-      },
-      {
-        headingId: 'state-safety-layer',
-        headingTitle: 'State Safety Layer & RequestScope',
-        content: `To ensure zero state leakage between requests in persistent workers:
-• RequestScope automatically resets tagged module services between requests.
-• The PHPStan \`NoMutableStaticStateRule\` flags mutable static properties at build time.`,
+        headingId: 'configuration',
+        headingTitle: 'Configuration & Claude API Key',
+        content: `Configure your Anthropic Claude API key in .env or config/ai.php:`,
         codeSnippet: {
-          title: 'PHPStan Leak Check',
-          language: 'bash',
-          code: `vendor/bin/phpstan analyse
-✔ [NoMutableStaticStateRule] 0 state leaks across persistent worker pool`,
+          title: 'config/ai.php',
+          language: 'php',
+          code: `return [
+    'default' => 'anthropic',
+    'providers' => [
+        'anthropic' => [
+            'api_key' => env('ANTHROPIC_API_KEY'),
+            'model'   => env('ANTHROPIC_MODEL', 'claude-sonnet-4-6'),
+            'max_tokens' => 8192,
+        ],
+    ],
+];`,
         },
       },
     ],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 3. Strict Domain-Driven Design (DDD)
+  // ─────────────────────────────────────────────────────────────────────────
   {
-    id: 'modules',
-    path: '/docs/modules',
+    id: 'strict-ddd',
+    path: '/docs/architecture',
     category: 'Core Concepts',
-    title: 'The Enforced Module System',
-    subtitle: 'Kernel-enforced Domain-Driven Design (DDD) module architecture.',
-    description: 'Explore Spinx module scaffolding, kernel boundary rules, module-level migrations, and cross-module contracts.',
+    title: 'Strict Domain-Driven Design (DDD)',
+    subtitle: 'Enforced modular boundaries isolating Domain, Application, and Infrastructure layers.',
+    description: 'Every Spinx module strictly segregates domain business logic, application orchestration, and infrastructure persistence.',
     readTime: '6 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'Architecture',
+    lastUpdated: 'v1.0.16',
+    badge: 'Core Pattern',
     headings: [
-      { id: 'module-scaffold', title: 'Module Directory Structure', level: 2 },
-      { id: 'kernel-enforced-rules', title: 'Kernel Enforced DDD Rules', level: 2 },
-      { id: 'module-definition', title: 'The module.php Definition File', level: 2 },
-      { id: 'gotcha-layer-violations', title: 'What Could Go Wrong: Layer Violations', level: 2 },
+      { id: 'ddd-layers', title: 'The Three DDD Layers', level: 2 },
+      { id: 'domain-layer', title: 'Domain: Entities & Repositories', level: 2 },
+      { id: 'application-layer', title: 'Application: Services & Use Cases', level: 2 },
+      { id: 'infrastructure-layer', title: 'Infrastructure: Controllers & Models', level: 2 },
+      { id: 'module-registration', title: 'Module Wiring in module.php', level: 2 },
     ],
     sections: [
       {
-        headingId: 'module-scaffold',
-        headingTitle: 'Module Directory Structure',
-        content: `The module system is the architectural heart of Spinx. There is no bare \`app/Controllers\` fallback — autodiscovery only registers code inside valid DDD module structures. Create a module with:`,
+        headingId: 'ddd-layers',
+        headingTitle: 'The Three DDD Layers',
+        content: `In Spinx, code is organized inside self-contained modules located under app/Modules/<Name>/. Each module adheres to strict DDD boundaries:
+
+\`\`\`
+app/Modules/Auth/
+├── Domain/
+│   ├── Entities/User.php               ← Pure Domain Entity (business invariants)
+│   └── Repositories/UserRepositoryInterface.php ← Domain Repository Contract
+├── Application/
+│   └── Services/AuthService.php        ← Application Service (orchestrates logic)
+├── Infrastructure/
+│   ├── Http/
+│   │   ├── Controllers/AuthController.php ← Thin Controller (validation & responses)
+│   │   └── Views/login.spinx.html      ← View Templates
+│   ├── Persistence/
+│   │   ├── Migrations/                 ← Database Migrations
+│   │   └── Models/User.php             ← DBAL Active Record Model
+│   └── Repositories/UserRepository.php ← Implements UserRepositoryInterface
+└── module.php                          ← Dependency Injection & Route bindings
+\`\`\``,
+      },
+      {
+        headingId: 'domain-layer',
+        headingTitle: 'Domain: Entities & Repositories',
+        content: `The Domain layer contains pure business objects and contracts with zero framework or database dependencies:`,
         codeSnippet: {
-          title: 'Terminal - Make Module',
-          language: 'bash',
-          code: `spinx make:module Billing`,
+          title: 'app/Modules/Auth/Domain/Entities/User.php',
+          language: 'php',
+          code: `namespace App\\Modules\\Auth\\Domain\\Entities;
+
+final class User
+{
+    public function __construct(
+        public readonly ?int $id,
+        public readonly string $name,
+        public readonly string $email,
+        public readonly ?string $createdAt = null,
+    ) {}
+
+    public function withName(string $name): self
+    {
+        return new self($this->id, trim($name), $this->email, $this->createdAt);
+    }
+}`,
         },
       },
       {
-        headingId: 'kernel-enforced-rules',
-        headingTitle: 'Kernel Enforced DDD Rules',
-        content: `When you create a module, Spinx scaffolds the following strict DDD layout:
+        headingId: 'application-layer',
+        headingTitle: 'Application: Services & Use Cases',
+        content: `The Application layer coordinates business operations, password hashing, and domain entities:`,
+        codeSnippet: {
+          title: 'app/Modules/Auth/Application/Services/AuthService.php',
+          language: 'php',
+          code: `namespace App\\Modules\\Auth\\Application\\Services;
 
-\`\`\`
-app/Modules/Billing/
-├── Domain/
-│   ├── Entities/
-│   ├── ValueObjects/
-│   ├── Events/
-│   └── Repositories/        (interfaces only)
-├── Application/
-│   ├── Services/
-│   └── Jobs/
-├── Infrastructure/
-│   ├── Repositories/        (concrete implementations)
-│   ├── Http/
-│   │   ├── Controllers/
-│   │   └── Middleware/
-│   └── Persistence/
-│       ├── Models/
-│       └── Migrations/
-└── module.php                ← registers aliases, routes, services
-\`\`\`
+use App\\Modules\\Auth\\Domain\\Entities\\User;
+use App\\Modules\\Auth\\Domain\\Repositories\\UserRepositoryInterface;
+use Spinx\\Auth\\Auth;
+use Spinx\\Auth\\Hash;
 
-• Kernel Enforced Rules:
-1. Controllers must live exclusively under \`Infrastructure/Http/Controllers\`.
-2. The \`Domain\` layer must have ZERO dependencies on \`Infrastructure\` or \`Application\` layers.
-3. Repository interfaces belong in \`Domain/Repositories\`; concrete classes live in \`Infrastructure/Repositories\`.`,
+final class AuthService
+{
+    public function __construct(
+        private readonly UserRepositoryInterface $userRepository,
+    ) {}
+
+    public function register(string $name, string $email, string $password): User
+    {
+        if ($this->userRepository->findByEmail($email) !== null) {
+            throw new \\InvalidArgumentException('An account with this email already exists.');
+        }
+
+        $hashedPassword = Hash::make($password);
+        $user = $this->userRepository->create($name, $email, $hashedPassword);
+        Auth::loginById((int) $user->id);
+
+        return $user;
+    }
+}`,
+        },
       },
       {
-        headingId: 'module-definition',
-        headingTitle: 'The module.php Definition File',
-        content: `Every module defines its controllers, middlewares, routes, and services in \`module.php\`:`,
+        headingId: 'infrastructure-layer',
+        headingTitle: 'Infrastructure: Controllers & Models',
+        content: `The Infrastructure layer handles HTTP requests, validation, and database queries:`,
         codeSnippet: {
-          title: 'app/Modules/Billing/module.php',
+          title: 'app/Modules/Auth/Infrastructure/Http/Controllers/AuthController.php',
           language: 'php',
-          code: `use App\\Modules\\Billing\\Infrastructure\\Http\\Controllers\\InvoiceController;
-use Spinx\\Auth\\Middleware\\AuthMiddleware;
-use Spinx\\Routing\\{AliasRegistry, Route, RouteBuilder};
-use Symfony\\Component\\DependencyInjection\\ContainerBuilder;
+          code: `namespace App\\Modules\\Auth\\Infrastructure\\Http\\Controllers;
 
-return [
-    'controllers' => static function (AliasRegistry $r): void {
-        $r->registerController('invoice_show', InvoiceController::class);
+use App\\Modules\\Auth\\Application\\Services\\AuthService;
+use Spinx\\Http\\Request;
+use Spinx\\Http\\Response;
+
+final class AuthController
+{
+    public function __construct(
+        private readonly AuthService $authService,
+    ) {}
+
+    public function login(): Response
+    {
+        $data = Request::validate([
+            'email'    => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        if ($this->authService->login($data['email'], $data['password'])) {
+            return redirect('/dashboard');
+        }
+
+        return view('Auth::login', ['error' => 'Invalid credentials.'], 401);
+    }
+}`,
+        },
+      },
+      {
+        headingId: 'module-registration',
+        headingTitle: 'Module Wiring in module.php',
+        content: `Each module exposes a module.php definition file binding interfaces to implementations and declaring routes:`,
+        codeSnippet: {
+          title: 'app/Modules/Auth/module.php',
+          language: 'php',
+          code: `return [
+    'services' => static function (ContainerBuilder $c, string $moduleDir): void {
+        $c->register(UserRepository::class)->setAutowired(true)->setPublic(true);
+        $c->setAlias(UserRepositoryInterface::class, UserRepository::class)->setPublic(true);
+        $c->register(AuthService::class)->setAutowired(true)->setPublic(true);
+        $c->register(AuthController::class)->setAutowired(true)->setPublic(true);
     },
-    'middlewares' => static function (AliasRegistry $r): void {
-        $r->registerMiddleware('auth', AuthMiddleware::class);
+    'controllers' => static function (AliasRegistry $r): void {
+        $r->registerController('auth', AuthController::class);
     },
     'routes' => static function (RouteBuilder $routes): void {
-        Route::get(['invoices.show', '/invoices/{id}'])
-            ->middleware(['auth'])
-            ->controller('invoice_show');
-    },
-    'services' => static function (ContainerBuilder $c, string $dir): void {
-        $c->register(InvoiceRepositoryInterface::class, InvoiceRepository::class)
-            ->setAutowired(true)
-            ->setPublic(true);
+        Route::get(['auth.login', '/login'])->controller('auth@showLogin');
+        Route::post(['auth.login.submit', '/login'])->controller('auth@login');
+        Route::post(['auth.logout', '/logout'])->controller('auth@logout');
     },
 ];`,
         },
       },
-      {
-        headingId: 'gotcha-layer-violations',
-        headingTitle: 'What Could Go Wrong: Layer Violations',
-        content: `Repository interfaces belong in \`Domain/Repositories\`, while implementations belong in \`Infrastructure/Repositories\`. The static analysis rule will reject builds that violate layer boundaries.`,
-        callout: {
-          type: 'warning',
-          title: 'What Could Go Wrong',
-          message: 'Static analysis will reject builds if Domain code imports namespace App\\Modules\\*\\Infrastructure. Domain code must remain pure and free of infrastructure dependencies.',
-        },
-      },
     ],
   },
-  {
-    id: 'routing',
-    path: '/docs/routing',
-    category: 'Core Concepts',
-    title: 'Fluent Routing DSL & Middlewares',
-    subtitle: 'Expressive route definitions, string alias resolution, and middleware pipelines.',
-    description: 'Learn how to use Spinx\'s fluent Route DSL, register controller and middleware aliases, and create nested route groups.',
-    readTime: '6 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'Routing',
-    headings: [
-      { id: 'fluent-dsl', title: 'Fluent Route DSL', level: 2 },
-      { id: 'route-groups', title: 'Nested Route Groups & Prefixes', level: 2 },
-      { id: 'alias-system', title: 'Controller & Middleware Alias System', level: 2 },
-      { id: 'middleware-pipeline', title: 'Middleware Execution Pipeline', level: 2 },
-    ],
-    sections: [
-      {
-        headingId: 'fluent-dsl',
-        headingTitle: 'Fluent Route DSL',
-        content: `Spinx features an expressive, fluent routing DSL that compiles down to Symfony's high-speed RouteCollection at boot time:`,
-        codeSnippet: {
-          title: 'Fluent Route Definition',
-          language: 'php',
-          code: `use Spinx\\Routing\\Route;
 
-Route::get(['orders.index', '/orders'])
-    ->middleware(['auth'])
-    ->controller('order_list');
-
-Route::post(['orders.create', '/orders'])
-    ->middleware(['auth', 'csrf'])
-    ->controller('order_create');`,
-        },
-      },
-      {
-        headingId: 'route-groups',
-        headingTitle: 'Nested Route Groups & Prefixes',
-        content: `Group routes under a shared URL prefix using \`Route::group()\`:`,
-        codeSnippet: {
-          title: 'Route Grouping Example',
-          language: 'php',
-          code: `Route::group('/api/v1', function (RouteBuilder $group): void {
-    Route::get(['users.list', '/users'])->controller('user_list');
-    Route::get(['users.show', '/users/{id}'])->controller('user_show');
-});`,
-        },
-      },
-      {
-        headingId: 'alias-system',
-        headingTitle: 'Controller & Middleware Alias System',
-        content: `String aliases decouple route declarations from fully qualified class names. Aliases registered in \`controllers\` and \`middlewares\` closures are automatically registered in the Symfony DI container:`,
-        codeSnippet: {
-          title: 'Alias Registration in module.php',
-          language: 'php',
-          code: `'controllers' => static function (AliasRegistry $r): void {
-    $r->registerController('order_list', OrderListController::class);
-},
-'middlewares' => static function (AliasRegistry $r): void {
-    $r->registerMiddleware('auth', AuthMiddleware::class);
-    $r->registerMiddleware('rate_limit', RateLimitMiddleware::class);
-},`,
-        },
-      },
-      {
-        headingId: 'middleware-pipeline',
-        headingTitle: 'Middleware Execution Pipeline',
-        content: `Middlewares implement a simple process() signature wrapping the request:`,
-        codeSnippet: {
-          title: 'Middleware Example',
-          language: 'php',
-          code: `final class CustomMiddleware
-{
-    public function process(Request $request, \\Closure $next): Response
-    {
-        // Pre-handler logic
-        $response = $next($request);
-        // Post-handler logic
-        return $response;
-    }
-}`,
-        },
-      },
-    ],
-  },
+  // ─────────────────────────────────────────────────────────────────────────
+  // 4. Multi-Action Routing & Facades
+  // ─────────────────────────────────────────────────────────────────────────
   {
-    id: 'database-orm',
-    path: '/docs/database-orm',
+    id: 'routing-controllers-facades',
+    path: '/docs/routing-and-controllers',
     category: 'Backend & Services',
-    title: 'Database, Active Record ORM & Schema Cache',
-    subtitle: 'Symfony DBAL foundation with coroutine-safe pooling, schema caching, and atomic operations.',
-    description: 'Learn how Spinx implements a fluent active-record ORM on DBAL with pre-compiled schema caching, upserts, and row locking.',
-    readTime: '7 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'Database & ORM',
-    headings: [
-      { id: 'dbal-foundation', title: 'DBAL 4 Foundation & Connection Pooling', level: 2 },
-      { id: 'schema-cache', title: 'Pre-Compiled Schema Cache (spinx schema:compile)', level: 2 },
-      { id: 'column-selection', title: 'Column Selection (selectWith & selectWithout)', level: 2 },
-      { id: 'conditional-queries', title: 'Conditional Queries (when/then/else)', level: 2 },
-      { id: 'atomic-upsert', title: 'Atomic Upserts & SELECT FOR UPDATE', level: 2 },
-      { id: 'db-facade', title: 'The DB Static Façade & Transactions', level: 2 },
-    ],
-    sections: [
-      {
-        headingId: 'dbal-foundation',
-        headingTitle: 'DBAL 4 Foundation & Connection Pooling',
-        content: `Spinx ORM is built on Doctrine DBAL 4. Connection pooling is managed automatically per runtime driver — persistent single connections for RoadRunner, and coroutine-aware checkout/release pools for Swoole.`,
-      },
-      {
-        headingId: 'schema-cache',
-        headingTitle: 'Pre-Compiled Schema Cache (spinx schema:compile)',
-        content: `Running \`spinx schema:compile\` inspects table schemas via DBAL 4 and writes an immutable column mapping file into \`storage/cache/schema_columns.php\`. The Kernel loads this file into OpCache at boot — zero runtime DB schema queries!`,
-        codeSnippet: {
-          title: 'Terminal - Compile Schema Cache',
-          language: 'bash',
-          code: `spinx schema:compile
-# Output: [Spinx] Schema compiled → storage/cache/schema_columns.php`,
-        },
-      },
-      {
-        headingId: 'column-selection',
-        headingTitle: 'Column Selection (selectWith & selectWithout)',
-        content: `Select specific columns or omit sensitive columns using pre-compiled schema introspection:`,
-        codeSnippet: {
-          title: 'Column Filtering Example',
-          language: 'php',
-          code: `// Select all columns except sensitive credentials:
-$users = User::query()
-    ->selectWithout('password', 'remember_token')
-    ->get();
-
-// Select strictly required fields:
-$titles = User::query()
-    ->selectWith('id', 'name', 'email')
-    ->get();`,
-        },
-      },
-      {
-        headingId: 'conditional-queries',
-        headingTitle: 'Conditional Queries (when/then/else)',
-        content: `Construct queries conditionally using fluent \`when()\`, \`then()\`, and \`else()\` / \`otherwise()\` clauses:`,
-        codeSnippet: {
-          title: 'Conditional Query Example',
-          language: 'php',
-          code: `$orders = Order::query()
-    ->where('status', 'active')
-    ->when($isAdmin)
-        ->then(fn($q) => $q->where('include_internal', true))
-        ->else(fn($q) => $q->where('is_public', true))
-    ->get();`,
-        },
-      },
-      {
-        headingId: 'atomic-upsert',
-        headingTitle: 'Atomic Upserts & SELECT FOR UPDATE',
-        content: `Execute platform-aware atomic upserts and transaction row-locking:`,
-        codeSnippet: {
-          title: 'Upsert & Atomic Locking Example',
-          language: 'php',
-          code: `// Platform-aware atomic upsert (PostgreSQL/SQLite ON CONFLICT, MySQL ON DUPLICATE KEY):
-User::upsert(
-    values: ['id' => 1, 'email' => 'user@example.com', 'login_count' => 5],
-    uniqueColumns: ['id'],
-    updateColumns: ['login_count']
-);
-
-// Row lock inside transaction (SELECT FOR UPDATE):
-Order::atomic($orderId, function (Order $order): void {
-    $order->update(['status' => 'processing']);
-});`,
-        },
-      },
-      {
-        headingId: 'db-facade',
-        headingTitle: 'The DB Static Façade & Transactions',
-        content: `For raw SQL queries, transactions, and reporting:`,
-        codeSnippet: {
-          title: 'DB Façade Example',
-          language: 'php',
-          code: `use Spinx\\Database\\DB;
-
-DB::transaction(function ($conn): void {
-    DB::statement('UPDATE accounts SET balance = balance - 100 WHERE id = :id', ['id' => 1]);
-    DB::statement('UPDATE accounts SET balance = balance + 100 WHERE id = :id', ['id' => 2]);
-});
-
-$rows = DB::select('SELECT id, name FROM users WHERE active = :a', ['a' => 1]);`,
-        },
-      },
-    ],
-  },
-  {
-    id: 'auth',
-    path: '/docs/auth',
-    category: 'Backend & Services',
-    title: 'Authentication & Session Subsystem',
-    subtitle: 'Stateless-safe session management, user providers, and route guard middlewares.',
-    description: 'Explore Spinx\'s built-in Auth façade, File and Database session drivers, password hashing, and middleware aliases.',
+    title: 'Multi-Action Routing & Facades',
+    subtitle: 'Group related actions in unified controllers with Request, Response, JsonResponse, and View facades.',
+    description: 'Spinx supports multi-action controllers with zero Symfony boilerplate, offering intuitive facades for requests, responses, and template rendering.',
     readTime: '6 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'Auth & Security',
+    lastUpdated: 'v1.0.16',
+    badge: 'Developer Experience',
     headings: [
-      { id: 'session-architecture', title: 'Persistent-Worker Session Architecture', level: 2 },
-      { id: 'auth-facade', title: 'The Auth Façade & UserProvider', level: 2 },
-      { id: 'password-hashing', title: 'Bcrypt Password Hashing (Hash::make)', level: 2 },
-      { id: 'auth-middlewares', title: 'Route Middlewares (auth & guest)', level: 2 },
+      { id: 'multi-action', title: 'Multi-Action Controller Syntax', level: 2 },
+      { id: 'request-facade', title: 'Request Facade & Helpers', level: 2 },
+      { id: 'response-facade', title: 'Response & JsonResponse Hierarchy', level: 2 },
+      { id: 'view-facade', title: 'View Facade & view() Helper', level: 2 },
     ],
     sections: [
       {
-        headingId: 'session-architecture',
-        headingTitle: 'Persistent-Worker Session Architecture',
-        content: `Traditional $_SESSION global variables are dangerous in persistent runtimes (RoadRunner/Swoole) because they leak across requests.
-
-Spinx provides an isolated \`SessionInterface\` hydrated at request start from cookie tokens and persisted at response end. Drivers include \`FileSession\` (JSON files in \`storage/sessions\`) and \`DatabaseSession\` (\`spinx_sessions\` table).`,
-      },
-      {
-        headingId: 'auth-facade',
-        headingTitle: 'The Auth Façade & UserProvider',
-        content: `Authenticate users cleanly via the static \`Auth\` façade:`,
+        headingId: 'multi-action',
+        headingTitle: 'Multi-Action Controller Syntax',
+        content: `Instead of maintaining dozens of single-action invokable classes, Spinx lets you group related actions in a single controller using 'alias@method' or '[Controller::class, "method"]':`,
         codeSnippet: {
-          title: 'Auth Controller Example',
+          title: 'Fluent Multi-Action Routing',
           language: 'php',
-          code: `use Spinx\\Auth\\Auth;
-
-// Attempt login (regenerates session ID to prevent fixation attacks):
-if (Auth::attempt(['email' => $email, 'password' => $password])) {
-    $user = Auth::user();
-    return new JsonResponse(['user_id' => Auth::id()]);
-}
-
-// Check state:
-if (Auth::check()) {
-    // Authenticated
-}
-
-Auth::logout();`,
+          code: `Route::get(['todos.index', '/todos'])->controller('todo@index');
+Route::post(['todos.create', '/todos'])->controller('todo@store');
+Route::post(['todos.toggle', '/todos/{id}/toggle'])->controller('todo@toggle');`,
         },
       },
       {
-        headingId: 'password-hashing',
-        headingTitle: 'Bcrypt Password Hashing (Hash::make)',
-        content: `Predictable 60-character bcrypt hashing:`,
+        headingId: 'request-facade',
+        headingTitle: 'Request Facade & Helpers',
+        content: `Access HTTP input, headers, client IP, and validate payloads statically:`,
         codeSnippet: {
-          title: 'Hash Helper Example',
+          title: 'Spinx\\Http\\Request Usage',
           language: 'php',
-          code: `use Spinx\\Auth\\Hash;
+          code: `use Spinx\\Http\\Request;
 
-$hash = Hash::make('secret_password', cost: 12);
-$isValid = Hash::check('secret_password', $hash);`,
+// Extract inputs
+$email = Request::input('email', 'default@example.com');
+$all = Request::all();
+$only = Request::only(['name', 'email']);
+$ip = Request::ip();
+$isAjax = Request::ajax();
+
+// Inline Validation (throws ValidationException on failure)
+$validated = Request::validate([
+    'title' => 'required|string|min:3|max:255',
+    'status' => 'required|in:draft,published',
+]);
+
+// Helper function
+$title = request('title');`,
         },
       },
       {
-        headingId: 'auth-middlewares',
-        headingTitle: 'Route Middlewares (auth & guest)',
-        content: `Protect routes with the built-in middleware aliases:`,
+        headingId: 'response-facade',
+        headingTitle: 'Response & JsonResponse Hierarchy',
+        content: `Spinx\\Http\\Response extends Symfony's base response, serving as both the static factory and concrete return type:`,
         codeSnippet: {
-          title: 'Route Auth Middleware',
+          title: 'API & HTML Responses',
           language: 'php',
-          code: `// Protected route:
-Route::get(['dashboard', '/dashboard'])
-    ->middleware(['auth'])
-    ->controller('dashboard_controller');
+          code: `use Spinx\\Http\\Response;
+use Spinx\\Http\\JsonResponse;
 
-// Guest-only route (redirects authenticated users away):
-Route::get(['login', '/login'])
-    ->middleware(['guest'])
-    ->controller('login_controller');`,
+// JSON API Response
+return Response::json(['users' => $users], 200);
+
+// Shorthand Envelopes
+return Response::jsonSuccess(['id' => 101]);
+return Response::jsonError('Record not found', 404);
+
+// Status Code Shorthands
+return JsonResponse::validationError($errors); // 422
+return JsonResponse::unauthorized();           // 401
+return JsonResponse::forbidden();              // 403
+
+// Redirects & HTML
+return Response::redirect('/dashboard');
+return redirect('/dashboard');
+return Response::html('<h1>Hello World</h1>');`,
+        },
+      },
+      {
+        headingId: 'view-facade',
+        headingTitle: 'View Facade & view() Helper',
+        content: `Render templates returning full Response objects with one line:`,
+        codeSnippet: {
+          title: 'Rendering Views',
+          language: 'php',
+          code: `// Directly returns Spinx\\Http\\Response (status 200 default)
+return view('Auth::login', [
+    'title' => 'Sign In',
+    'errors' => [],
+]);
+
+// Raw HTML string via View facade:
+$html = \\Spinx\\Templating\\View::make('welcome', ['version' => '1.0.16']);`,
         },
       },
     ],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 5. Validation Subsystem
+  // ─────────────────────────────────────────────────────────────────────────
   {
-    id: 'validation',
+    id: 'validation-subsystem',
     path: '/docs/validation',
     category: 'Backend & Services',
-    title: 'Data Validation Subsystem',
-    subtitle: 'Pipe-delimited rule validation with UTF-8 length awareness and allowlist output.',
-    description: 'Master Spinx validation rules, custom error messages, nullable handling, and ValidationException formatting.',
+    title: 'Validation Subsystem',
+    subtitle: 'Over 40 production-ready validation rules with Validate facade and Request::validate().',
+    description: 'A comprehensive, zero-dependency validation engine supporting type, presence, format, size, date, and content rules.',
     readTime: '5 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'Validation',
+    lastUpdated: 'v1.0.16',
+    badge: 'Subsystems',
     headings: [
-      { id: 'validator-usage', title: 'Basic Validation Usage', level: 2 },
-      { id: 'available-rules', title: 'Available Validation Rules', level: 2 },
-      { id: 'allowlist-output', title: 'Allowlist Data Return', level: 2 },
-      { id: 'custom-messages', title: 'Custom Error Messages & Exception Handling', level: 2 },
+      { id: 'validation-usage', title: 'Validation Usage', level: 2 },
+      { id: 'available-rules', title: 'Available Rules (40+)', level: 2 },
+      { id: 'safe-and-exceptions', title: 'Safe Data & ValidationException', level: 2 },
     ],
     sections: [
       {
-        headingId: 'validator-usage',
-        headingTitle: 'Basic Validation Usage',
-        content: `Validate incoming input arrays with pipe-delimited rule strings:`,
+        headingId: 'validation-usage',
+        headingTitle: 'Validation Usage',
+        content: `Validate user input with pipe-delimited rule strings:`,
         codeSnippet: {
-          title: 'Validation in Controller',
+          title: 'Validation Approaches',
           language: 'php',
-          code: `use Spinx\\Validation\\Validator;
+          code: `use Spinx\\Http\\Request;
+use Spinx\\Validation\\Validate;
+use Spinx\\Validation\\Validator;
 
-$validated = Validator::make($request->request->all(), [
-    'name' => 'required|string|max:100',
-    'email' => 'required|email',
-    'password' => 'required|min:8|confirmed',
-    'tier' => 'required|in:free,pro,enterprise',
-    'bio' => 'nullable|string|max:500',
-])->validate();`,
+// 1. Via Request facade:
+$data = Request::validate([
+    'email'    => 'required|email|max:255',
+    'password' => 'required|string|min:8|confirmed',
+]);
+
+// 2. Via Validate facade:
+$data = Validate::check($input, [
+    'sku'   => 'required|alpha_dash|size:8',
+    'price' => 'required|numeric|gt:0',
+]);
+
+// 3. Conditional / safe check without throwing:
+$validator = Validator::make($input, ['age' => 'required|integer|between:18,120']);
+if ($validator->fails()) {
+    $errors = $validator->errors();
+} else {
+    $data = $validator->safe();
+}`,
         },
       },
       {
         headingId: 'available-rules',
-        headingTitle: 'Available Validation Rules',
-        content: `Supported validation rules:`,
+        headingTitle: 'Available Rules (40+)',
+        content: `Spinx includes built-in rules for every web and API scenario:`,
         tableData: {
-          headers: ['Rule', 'Description'],
+          headers: ['Category', 'Rules'],
           rows: [
-            ['required', 'Field must exist in the input array and cannot be empty string or null'],
-            ['nullable', 'If field is missing or empty, all subsequent validation rules on it are skipped'],
-            ['string', 'Value must be a string'],
-            ['integer', 'Value must be an integer or integer string'],
-            ['numeric', 'Value must be a numeric value (int or float)'],
-            ['array', 'Value must be an array'],
-            ['email', 'Value must pass filter_var EMAIL validation'],
-            ['min:n', 'Strings must have >= n characters (via mb_strlen); numbers must be >= n'],
-            ['max:n', 'Strings must have <= n characters (via mb_strlen); numbers must be <= n'],
-            ['in:a,b,c', 'Value must match one of the comma-separated options'],
-            ['confirmed', 'Value must match {field}_confirmation in the input array'],
+            ['Presence', 'required, nullable, accepted, declined, prohibited'],
+            ['Types', 'string, integer/int, numeric, float/decimal, boolean/bool, array, json'],
+            ['Format', 'email, url, ip, ipv4, ipv6, uuid, phone, alpha, alpha_num, alpha_dash, alpha_spaces, lowercase, uppercase'],
+            ['Size & Range', 'min:N, max:N, size:N, between:min,max, gt:N, lt:N, gte:N, lte:N, digits:N, digits_between:min,max, min_words:N, max_words:N'],
+            ['Dates', 'date, date_format:format, before:date, after:date'],
+            ['Content', 'in:a,b,c, not_in:a,b,c, confirmed, same:field, different:field, starts_with:prefix, ends_with:suffix, contains:str, regex:pattern, not_regex:pattern'],
           ],
         },
       },
       {
-        headingId: 'allowlist-output',
-        headingTitle: 'Allowlist Data Return',
-        content: `Calling \`validate()\` returns an array containing ONLY the fields declared in your rules map, discarding any undeclared or unexpected payload fields automatically.`,
-      },
-      {
-        headingId: 'custom-messages',
-        headingTitle: 'Custom Error Messages & Exception Handling',
-        content: `Customize error messages per field and rule:`,
+        headingId: 'safe-and-exceptions',
+        headingTitle: 'Safe Data & ValidationException',
+        content: `When validation fails, ValidationException carries structured error messages matching Laravel's familiar shape:`,
         codeSnippet: {
-          title: 'Custom Error Messages',
+          title: 'Handling Validation Exceptions',
           language: 'php',
-          code: `$validator = Validator::make($data, $rules, [
-    'email.required' => 'We need an email address to create your account.',
-    'email.email' => 'Please provide a valid corporate email.',
-]);
-
-if ($validator->fails()) {
-    $errors = $validator->errors(); // ['email' => ['We need an email...']]
+          code: `try {
+    $data = Request::validate(['email' => 'required|email']);
+} catch (\\Spinx\\Validation\\ValidationException $e) {
+    // $e->errors() returns: ['email' => ['The email field must be a valid email address.']]
+    return view('Auth::register', ['errors' => $e->errors()], 422);
 }`,
         },
       },
     ],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 6. Security & Session CSRF
+  // ─────────────────────────────────────────────────────────────────────────
   {
-    id: 'queues-scheduler',
-    path: '/docs/queues-scheduler',
+    id: 'security-session-csrf',
+    path: '/docs/security',
     category: 'Backend & Services',
-    title: 'Background Work: Queues & Scheduler',
-    subtitle: 'Offload heavy jobs and schedule recurring cron tasks without extra supervisor processes.',
-    description: 'Master async queue workers, background job dispatching, cron task scheduling, and worker state isolation.',
+    title: 'Security & Session-Backed CSRF',
+    subtitle: 'Stateful sessions, token rotation, automatic cookie sync, and authentication guards.',
+    description: 'Spinx protects your persistent-process application with session-backed CSRF tokens, secure cookie synchronization, and auth middleware.',
     readTime: '5 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'Async Workloads',
+    lastUpdated: 'v1.0.16',
+    badge: 'Security',
     headings: [
-      { id: 'dispatching-jobs', title: 'Dispatching Database-Backed Jobs', level: 2 },
-      { id: 'task-scheduler', title: 'Task Scheduler & schedule.php', level: 2 },
-      { id: 'running-scheduler', title: 'Running the Scheduler (spinx schedule:run)', level: 2 },
-      { id: 'worker-isolation', title: 'Worker Process Isolation', level: 2 },
+      { id: 'session-csrf', title: 'Session-Backed CSRF', level: 2 },
+      { id: 'csrf-middleware', title: 'CsrfMiddleware & @csrf Directive', level: 2 },
+      { id: 'auth-guards', title: 'Auth & Guest Middleware Guards', level: 2 },
     ],
     sections: [
       {
-        headingId: 'dispatching-jobs',
-        headingTitle: 'Dispatching Database-Backed Jobs',
-        content: `Offload heavy processing to background queue workers:`,
-        codeSnippet: {
-          title: 'Dispatching Queue Job',
-          language: 'php',
-          code: `use Spinx\\Queue\\QueueManager;
+        headingId: 'session-csrf',
+        headingTitle: 'Session-Backed CSRF',
+        content: `Spinx CSRF tokens are securely stored in the active SessionInterface session (_token). On state-changing requests (POST, PUT, PATCH, DELETE), CsrfMiddleware verifies submitted tokens against the session token.
 
-$queueManager->dispatch(new SendInvoiceEmailJob($invoiceId));`,
-        },
+For frontend SPA and JavaScript fetch/axios clients, CsrfMiddleware automatically synchronizes the active token to a readable XSRF-TOKEN cookie.`,
       },
       {
-        headingId: 'task-scheduler',
-        headingTitle: 'Task Scheduler & schedule.php',
-        content: `Define scheduled tasks in \`schedule.php\` at the project root using a fluent API:`,
+        headingId: 'csrf-middleware',
+        headingTitle: 'CsrfMiddleware & @csrf Directive',
+        content: `Include @csrf in any Spinx template form to output the hidden input field:`,
         codeSnippet: {
-          title: 'schedule.php Definition',
-          language: 'php',
-          code: `use Spinx\\Schedule\\Scheduler;
-
-return function (Scheduler $scheduler, $container): void {
-    // Run daily at 03:00 AM:
-    $scheduler->call(function () use ($container) {
-        $container->get(CleanupService::class)->run();
-    }, 'daily cleanup')->daily('03:00');
-
-    // Run every 15 minutes:
-    $scheduler->call(fn() => checkMetrics(), 'check metrics')->everyMinutes(15);
-
-    // Run every Monday at 08:30:
-    $scheduler->call(fn() => sendReports(), 'weekly report')->weekly(1, '08:30');
-};`,
-        },
-      },
-      {
-        headingId: 'running-scheduler',
-        headingTitle: 'Running the Scheduler (spinx schedule:run)',
-        content: `A single OS cron entry invoking \`spinx schedule:run\` executes every due task:`,
-        codeSnippet: {
-          title: 'Crontab Configuration',
-          language: 'bash',
-          code: `* * * * * cd /path/to/app && php spinx schedule:run >> /dev/null 2>&1`,
-        },
-      },
-      {
-        headingId: 'worker-isolation',
-        headingTitle: 'Worker Process Isolation',
-        content: `Queued jobs execute on dedicated background worker processes (\`spinx queue:work\`) isolated from HTTP request workers. Services resolved inside a job handler go through their own fresh request-scoped container.`,
-      },
-    ],
-  },
-  {
-    id: 'openapi',
-    path: '/docs/openapi',
-    category: 'API & Reference',
-    title: 'OpenAPI 3.1 Specification Generator',
-    subtitle: 'Automatic OpenAPI schema generation from routes and PHP 8 attributes.',
-    description: 'Learn how to annotate Spinx controllers with PHP 8 attributes and generate OpenAPI 3.1 JSON schemas automatically.',
-    readTime: '4 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'API & OpenAPI',
-    headings: [
-      { id: 'openapi-generation', title: 'Generating OpenAPI Schemas (spinx openapi:generate)', level: 2 },
-      { id: 'php8-attributes', title: 'PHP 8 OpenAPI Attributes', level: 2 },
-      { id: 'controller-example', title: 'Annotated Controller Example', level: 2 },
-    ],
-    sections: [
-      {
-        headingId: 'openapi-generation',
-        headingTitle: 'Generating OpenAPI Schemas (spinx openapi:generate)',
-        content: `Spinx reflects registered routes and controller metadata to build an OpenAPI 3.1 schema:`,
-        codeSnippet: {
-          title: 'Terminal - Generate OpenAPI Spec',
-          language: 'bash',
-          code: `spinx openapi:generate --output=public/openapi.json
-# Output: [Spinx] OpenAPI specification generated → public/openapi.json`,
-        },
-      },
-      {
-        headingId: 'php8-attributes',
-        headingTitle: 'PHP 8 OpenAPI Attributes',
-        content: `Annotate your controllers with Spinx OpenAPI attributes:
-• \`#[ApiSummary('Summary text', 'Optional description')]\`
-• \`#[ApiParam(name: 'id', in: 'path', type: 'string', required: true)]\`
-• \`#[ApiResponse(status: 200, description: 'Success response')]\`
-• \`#[ApiTag('Billing')]\``,
-      },
-      {
-        headingId: 'controller-example',
-        headingTitle: 'Annotated Controller Example',
-        content: `Controller with OpenAPI attributes:`,
-        codeSnippet: {
-          title: 'InvoiceShowController.php',
-          language: 'php',
-          code: `namespace App\\Modules\\Billing\\Infrastructure\\Http\\Controllers;
-
-use Spinx\\OpenApi\\Attributes\\{ApiSummary, ApiParam, ApiResponse, ApiTag};
-use Symfony\\Component\\HttpFoundation\\{Request, JsonResponse};
-
-#[ApiTag('Invoices')]
-#[ApiSummary('Fetch invoice details by ID')]
-#[ApiParam(name: 'id', in: 'path', type: 'integer', description: 'Invoice ID')]
-#[ApiResponse(status: 200, description: 'Invoice data returned')]
-#[ApiResponse(status: 404, description: 'Invoice not found')]
-final class InvoiceShowController
-{
-    public function __invoke(Request $request, int $id): JsonResponse
-    {
-        return new JsonResponse(['id' => $id, 'status' => 'paid']);
-    }
-}`,
-        },
-      },
-    ],
-  },
-  {
-    id: 'templating-islands',
-    path: '/docs/templating-islands',
-    category: 'Frontend & Islands',
-    title: 'Templates & Reactive Island Hydration',
-    subtitle: 'Ultra-fast server HTML rendering with selective client-side Vue & React island hydration.',
-    description: 'Learn Spinx HTML template directives, client-side island hydration (@island), Vite asset compilation, and mobile device preview tools.',
-    readTime: '6 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'Frontend & Islands',
-    headings: [
-      { id: 'template-directives', title: 'Spinx Template Directives', level: 2 },
-      { id: 'island-hydration', title: 'Client Island Hydration (@island)', level: 2 },
-      { id: 'vite-integration', title: 'Vite Asset Pipeline & HMR', level: 2 },
-      { id: 'mobile-preview', title: 'Mobile Device Preview Tool (spinx preview --mobile)', level: 2 },
-    ],
-    sections: [
-      {
-        headingId: 'template-directives',
-        headingTitle: 'Spinx Template Directives',
-        content: `Spinx templates compile to high-speed native PHP with familiar directives:
-• \`{{ $variable }}\` (HTML-escaped output)
-• \`{!! $rawHtml !!}\` (Unescaped output)
-• \`@if($condition) ... @endif\`
-• \`@foreach($items as $item) ... @endforeach\`
-• \`@csrf\` (Hidden CSRF input field)`,
-      },
-      {
-        headingId: 'island-hydration',
-        headingTitle: 'Client Island Hydration (@island)',
-        content: `Embed reactive Vue 3 or React 19 client components directly in server HTML templates:`,
-        codeSnippet: {
-          title: 'View Template with Island',
+          title: 'Template Form with @csrf',
           language: 'html',
-          code: `<div class="dashboard-card">
-    <h2>Realtime Metrics</h2>
-    <p>Server-rendered at {{ date('H:i') }}</p>
-
-    <!-- Client-side reactive island hydrated via Vite -->
-    @island('MetricsChart', ['projectId' => $project->id, 'initialData' => $metrics])
-</div>`,
+          code: `<form method="POST" action="/login">
+    @csrf
+    <input type="email" name="email" required />
+    <input type="password" name="password" required />
+    <button type="submit">Sign In</button>
+</form>`,
         },
       },
       {
-        headingId: 'vite-integration',
-        headingTitle: 'Vite Asset Pipeline & HMR',
-        content: `During development (\`spinx serve\`), Vite provides sub-50ms Hot Module Replacement. In production (\`spinx build\`), Vite compiles static bundles with hashed filenames for immutable caching.`,
-      },
-      {
-        headingId: 'mobile-preview',
-        headingTitle: 'Mobile Device Preview Tool (spinx preview --mobile)',
-        content: `Launch the interactive browser-based device container to test your responsive views on simulated iPhone and Android viewports:`,
+        headingId: 'auth-guards',
+        headingTitle: 'Auth & Guest Middleware Guards',
+        content: `Protect routes with session guards declared in module.php:`,
         codeSnippet: {
-          title: 'Terminal - Launch Mobile Preview',
-          language: 'bash',
-          code: `spinx preview --mobile
-# Opens interactive device preview container with iPhone 15 Pro, Pixel 7, and Galaxy presets`,
+          title: 'Guarding Routes',
+          language: 'php',
+          code: `// Protected user dashboard (redirects guests to /login)
+Route::get(['auth.dashboard', '/dashboard'])
+    ->middleware(['auth', 'csrf'])
+    ->controller('auth@dashboard');
+
+// Guest only (redirects authenticated users to /dashboard)
+Route::get(['auth.login', '/login'])
+    ->middleware(['guest', 'csrf'])
+    ->controller('auth@showLogin');`,
         },
       },
     ],
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 7. Caching Subsystem
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: 'caching-subsystem',
+    path: '/docs/caching',
+    category: 'Backend & Services',
+    title: 'Caching Subsystem',
+    subtitle: 'High-performance cache layer supporting File, Array, and Redis drivers.',
+    description: 'Fast data caching with Cache facade, cache() helper function, atomic file writes, and CLI optimization commands.',
+    readTime: '5 min read',
+    lastUpdated: 'v1.0.16 (New Subsystem)',
+    badge: 'Performance',
+    headings: [
+      { id: 'cache-overview', title: 'Cache Drivers & Configuration', level: 2 },
+      { id: 'cache-facade', title: 'Cache Facade & cache() Helper', level: 2 },
+      { id: 'cli-cache-commands', title: 'CLI Cache Management', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'cache-overview',
+        headingTitle: 'Cache Drivers & Configuration',
+        content: `Spinx includes a dedicated caching subsystem configured via config/cache.php:
+
+• File: Atomic file storage in storage/cache/data/ with expiration timestamps (Default).
+• Array: In-memory store for unit testing.
+• Redis: High-throughput distributed caching store for clusters.`,
+        codeSnippet: {
+          title: 'config/cache.php',
+          language: 'php',
+          code: `return [
+    'default' => env('CACHE_DRIVER', 'file'),
+    'stores' => [
+        'file' => [
+            'driver' => 'file',
+            'path'   => storage_path('cache/data'),
+        ],
+        'redis' => [
+            'driver' => 'redis',
+            'host'   => env('REDIS_HOST', '127.0.0.1'),
+            'port'   => (int) env('REDIS_PORT', 6379),
+        ],
+    ],
+];`,
+        },
+      },
+      {
+        headingId: 'cache-facade',
+        headingTitle: 'Cache Facade & cache() Helper',
+        content: `Store, retrieve, and compute cache values with seamless ergonomics:`,
+        codeSnippet: {
+          title: 'Cache Operations',
+          language: 'php',
+          code: `use Spinx\\Cache\\Cache;
+
+// Store for 1 hour (3600 seconds)
+Cache::put('dashboard:stats', $stats, 3600);
+
+// Retrieve with fallback default
+$stats = Cache::get('dashboard:stats', []);
+
+// Remember: fetch from cache or compute and store
+$user = Cache::remember('user:1', 600, fn() => User::find(1));
+
+// Remove or clear
+Cache::forget('dashboard:stats');
+Cache::flush();
+
+// Helper function
+cache(['featured_ids' => [1, 2, 3]], 300);
+$ids = cache('featured_ids');`,
+        },
+      },
+      {
+        headingId: 'cli-cache-commands',
+        headingTitle: 'CLI Cache Management',
+        content: `Manage application and framework caches with CLI commands:
+
+• spinx cache:clear: Clears application data cache (storage/cache/data/).
+• spinx cache:forget <key>: Removes a specific key from cache.
+• spinx view:clear: Clears compiled Blade template cache.
+• spinx container:clear: Clears compiled DI container.
+• spinx schema:clear: Clears compiled DBAL schema cache.
+• spinx optimize:clear: Clears all caches simultaneously.
+• spinx optimize: Pre-compiles DI container, DBAL schema columns, and warms production cache.`,
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 8. CLI Reference
+  // ─────────────────────────────────────────────────────────────────────────
   {
     id: 'cli-reference',
     path: '/docs/cli-reference',
     category: 'API & Reference',
-    title: 'CLI Reference & Commands',
-    subtitle: 'Complete command-line interface specification for Spinx framework.',
-    description: 'Comprehensive reference of all CLI commands for project creation, code generation, runtime management, and previewers.',
-    readTime: '5 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'Reference',
+    title: 'Spinx CLI Reference',
+    subtitle: 'Complete guide to all built-in commands for scaffolding, migrations, caching, AI, and previewers.',
+    description: 'Full reference of all CLI commands available in the spinx binary.',
+    readTime: '4 min read',
+    lastUpdated: 'v1.0.16',
+    badge: 'CLI Tooling',
     headings: [
-      { id: 'all-commands-table', title: 'Complete CLI Command Table', level: 2 },
-      { id: 'generator-reference', title: 'Code Generators Reference', level: 2 },
+      { id: 'dev-and-runtime', title: 'Development & Runtime', level: 2 },
+      { id: 'ai-commands', title: 'AI Builder Commands', level: 2 },
+      { id: 'cache-and-optimize', title: 'Cache & Optimization Commands', level: 2 },
+      { id: 'generators-and-migrations', title: 'Generators & Database', level: 2 },
     ],
     sections: [
       {
-        headingId: 'all-commands-table',
-        headingTitle: 'Complete CLI Command Table',
-        content: `Below is the complete reference of all first-party Spinx CLI commands:`,
+        headingId: 'dev-and-runtime',
+        headingTitle: 'Development & Runtime',
+        content: `Core runtime commands:`,
         tableData: {
-          headers: ['Command', 'Purpose'],
+          headers: ['Command', 'Description'],
           rows: [
-            ['spinx new <project> [--frontend=vue|react]', 'Scaffold a brand new Spinx project'],
-            ['spinx serve', 'Boot backend persistent worker + Vite dev server with HMR'],
-            ['spinx driver:swap <roadrunner|swoole>', 'Switch runtime driver in spinx.json'],
-            ['spinx make:module <Name>', 'Generate full DDD module skeleton'],
-            ['spinx make:controller <Module> <Name>', 'Generate controller in module Infrastructure layer'],
-            ['spinx make:entity <Module> <Name>', 'Generate Domain entity'],
-            ['spinx make:service <Module> <Name>', 'Generate Application service'],
-            ['spinx make:repository <Module> <Name>', 'Generate repository interface & implementation pair'],
-            ['spinx make:model <Module> <Name>', 'Generate ORM model in Infrastructure layer'],
-            ['spinx make:middleware <Module> <Name>', 'Generate middleware class'],
-            ['spinx make:migration <Module> <desc>', 'Generate timestamped database migration'],
-            ['spinx make:mail <Module> <Name>', 'Generate Mailable + view + queueable Job'],
-            ['spinx migrate [Name]', 'Run pending database migrations'],
-            ['spinx queue:work', 'Poll and process database-backed job queue'],
-            ['spinx schedule:run', 'Run all due tasks declared in schedule.php'],
-            ['spinx schema:compile', 'Introspect database schema and write storage/cache/schema_columns.php'],
-            ['spinx openapi:generate', 'Generate OpenAPI 3.1 specification from routes and attributes'],
-            ['spinx preview --mobile', 'Open dev server in interactive browser-based mobile preview container'],
-            ['spinx preview --android', 'Open dev server on connected Android device/emulator'],
-            ['spinx preview --ios', 'Open dev server on iOS Simulator (macOS + Xcode)'],
-            ['spinx preview --desktop', 'Open dev server in native desktop webview window'],
-            ['spinx build:mobile --android', 'Scaffold native Android shell (Kotlin + WebView) in mobile/android/'],
-            ['spinx build:mobile --ios', 'Scaffold native iOS shell (Swift + WKWebView) in mobile/ios/'],
-            ['spinx build', 'Production build: compiled frontend assets + primed backend cache'],
+            ['spinx new <project>', 'Scaffold a brand new Spinx project with Vue or React.'],
+            ['spinx serve', 'Boot persistent server (RoadRunner/Swoole) + Vite dev server.'],
+            ['spinx driver:swap <driver>', 'Switch runtime driver between roadrunner and swoole.'],
+            ['spinx preview --mobile', 'Open dev server in responsive mobile device preview.'],
+            ['spinx preview --desktop', 'Open dev server in native desktop webview window.'],
+            ['spinx logs [--lines=N]', 'View recent application logs with colored trace formatting.'],
+            ['spinx log:clear', 'Clear all log files in storage/logs/.'],
           ],
         },
       },
       {
-        headingId: 'generator-reference',
-        headingTitle: 'Code Generators Reference',
-        content: `All code generator commands enforce module boundaries. Generated files are placed strictly within their designated DDD layer inside the target module.`,
-      },
-    ],
-  },
-  {
-    id: 'saas-quickstart',
-    path: '/docs/guides/saas-quickstart',
-    category: 'Guides & Examples',
-    title: 'Multi-Tenant SaaS & Stripe Guide',
-    subtitle: 'Building high-scale SaaS with tenant isolation and async Stripe webhooks.',
-    description: 'Practical guide to multi-tenant request middleware, isolated tenant contexts, and async Stripe webhook processing.',
-    readTime: '8 min read',
-    lastUpdated: 'Updated v1',
-    badge: 'Guide',
-    headings: [
-      { id: 'saas-architecture', title: 'Multi-Tenant Architecture Overview', level: 2 },
-      { id: 'tenant-middleware', title: 'Tenant Isolation Middleware', level: 2 },
-      { id: 'async-stripe-webhooks', title: 'Async Stripe Webhook Handler', level: 2 },
-    ],
-    sections: [
-      {
-        headingId: 'saas-architecture',
-        headingTitle: 'Multi-Tenant Architecture Overview',
-        content: `Spinx's request-scoped container makes multi-tenant SaaS architecture clean and memory-safe. Tenants are identified via subdomain or header, and their scoped database connection is bound for the duration of that request only.`,
-      },
-      {
-        headingId: 'tenant-middleware',
-        headingTitle: 'Tenant Isolation Middleware',
-        content: `Register a tenant identification middleware on routes requiring multi-tenant scoping:`,
-        codeSnippet: {
-          title: 'TenantMiddleware.php',
-          language: 'php',
-          code: `final class TenantMiddleware
-{
-    public function process(Request $request, \\Closure $next): Response
-    {
-        $tenantId = $request->headers->get('X-Tenant-ID');
-        $request->attributes->set('tenant_id', $tenantId);
-
-        return $next($request);
-    }
-}`,
+        headingId: 'ai-commands',
+        headingTitle: 'AI Builder Commands',
+        content: `Autonomous AI development commands:`,
+        tableData: {
+          headers: ['Command', 'Description'],
+          rows: [
+            ['spinx ai:chat', 'Launch conversational AI terminal interface with Claude Sonnet 4.6.'],
+            ['spinx ai:build "<prompt>"', 'Autonomous one-shot module and feature generator.'],
+            ['spinx ai:ui', 'Launch the local AI Builder Web Dashboard at http://localhost:8080/_spinx/ai.'],
+          ],
         },
       },
       {
-        headingId: 'async-stripe-webhooks',
-        headingTitle: 'Async Stripe Webhook Handler',
-        content: `Offload heavy Stripe webhook events immediately to background workers:`,
-        codeSnippet: {
-          title: 'StripeWebhookController.php',
-          language: 'php',
-          code: `public function __invoke(Request $request): JsonResponse
-{
-    $event = json_decode($request->getContent(), true);
-
-    $this->queueManager->dispatch(new ProcessStripeWebhookJob($event));
-
-    return new JsonResponse(['status' => 'queued'], 200);
-}`,
+        headingId: 'cache-and-optimize',
+        headingTitle: 'Cache & Optimization Commands',
+        content: `Performance and cache maintenance commands:`,
+        tableData: {
+          headers: ['Command', 'Description'],
+          rows: [
+            ['spinx optimize', 'Pre-compile DI container, DBAL schema cache, and warm production cache.'],
+            ['spinx optimize:clear', 'Clear all cached bootstrap files, schema, views, and application data.'],
+            ['spinx cache:clear', 'Clear application data cache (storage/cache/data/).'],
+            ['spinx cache:forget <key>', 'Remove a specific key from application data cache.'],
+            ['spinx view:clear', 'Clear compiled Blade view templates (storage/cache/views/).'],
+            ['spinx container:clear', 'Clear compiled DI container cache (storage/cache/container.php*).'],
+            ['spinx schema:clear', 'Clear compiled DBAL schema cache (storage/cache/schema_columns.php).'],
+          ],
+        },
+      },
+      {
+        headingId: 'generators-and-migrations',
+        headingTitle: 'Generators & Database',
+        content: `Scaffolding and database commands:`,
+        tableData: {
+          headers: ['Command', 'Description'],
+          rows: [
+            ['spinx make:module <Name> [--all]', 'Scaffold a DDD module directory with domain/app/infra.'],
+            ['spinx make:controller <Mod> <Name>', 'Generate a multi-action controller in module.'],
+            ['spinx make:entity <Mod> <Name>', 'Generate a pure Domain entity.'],
+            ['spinx make:service <Mod> <Name>', 'Generate an Application service.'],
+            ['spinx make:repository <Mod> <Name>', 'Generate a repository interface + implementation pair.'],
+            ['spinx make:migration <Mod> <desc>', 'Generate a timestamp-prefixed migration file.'],
+            ['spinx migrate [Name]', 'Run pending database migrations.'],
+            ['spinx schema:compile', 'Introspect database schema and write storage/cache/schema_columns.php.'],
+          ],
         },
       },
     ],

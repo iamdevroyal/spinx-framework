@@ -16,6 +16,25 @@ export const OneDesignSection: React.FC<OneDesignSectionProps> = ({
 
   const items = [
     {
+      id: 'ai',
+      label: 'AI BUILDER',
+      filename: 'Terminal / spinx ai:build',
+      code: `// Autonomous Framework Builder with Bidirectional Grounding
+use Spinx\\Ai\\Ai;
+
+// 1. Analyze prompt, inspect sibling modules & frontend views:
+$plan = Ai::reason('Create a Subscription Billing module with Stripe checkout');
+
+// 2. Execute multi-agent build with 0-issue DDD compliance:
+$result = Ai::build('Create a Subscription Billing module with Stripe checkout');
+// Output:
+//  ✔ ArchitectAgent: Created SubscriptionPlan entity & repository contract
+//  ✔ DatabaseAgent: Generated 2026_08_08_000001_create_plans_table.php
+//  ✔ RoutingAgent: Crafted BillingController with Request::validate()
+//  ✔ FrontendAgent: Generated checkout.spinx.html with @island hydration
+//  ✔ CodeAnalyzer: 100% DDD compliance verified across all layers`,
+    },
+    {
       id: 'runtime',
       label: 'RUNTIME ADAPTERS',
       filename: 'public/index.php',
