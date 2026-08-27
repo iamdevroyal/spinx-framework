@@ -44,33 +44,55 @@ Spinx is a modern PHP framework engineered for:
 
 ## 2. Installation & Quickstart
 
+### Recommended: Spinx Global Installer
+
+Install the official global installer:
+
 ```bash
-# Step 1: Install Spinx via Composer
-composer create-project spinx/spinx my-spinx --stability=dev
-cd my-spinx
+composer global require spinxphp/installer
+```
 
-# Step 2: Scaffold a new project
-php spinx new my-app --frontend=vue
+Create a new application from anywhere:
+
+```bash
+spinx new my-app
+```
+
+An interactive setup wizard guides you through:
+1. **Frontend Selection** (Vue 3 + Vite, React 19 + Vite, or None)
+2. **Database Driver** (SQLite zero-config, MySQL, or PostgreSQL)
+3. **Runtime Driver** (RoadRunner persistent workers or Swoole coroutines)
+4. **App URL configuration**
+5. **RoadRunner binary auto-download** (`vendor/bin/rr get`)
+6. **Initial database migrations** (`php spinx migrate`)
+
+Start your development server:
+
+```bash
 cd my-app
-
-# Step 3: Install dependencies
-composer install
-cd frontend && npm install && cd ..
-
-# Step 4: Download RoadRunner binary
-vendor/bin/rr get
-
-# Step 5: Configure environment
-cp .env.example .env
-# Set APP_KEY, DB_CONNECTION, REDIS_HOST etc.
-
-# Step 6: Run migrations
-php spinx migrate
-
-# Step 7: Start development server
 php spinx serve
-# → http://localhost:8080  (application)
+# → http://localhost:8080  (Application)
 # → http://localhost:5173  (Vite HMR)
+```
+
+**CLI Flags:**
+
+```bash
+spinx new my-app --frontend=vue              # Vue 3 + Vite (default)
+spinx new my-app --frontend=react            # React 19 + Vite
+spinx new my-app --frontend=none             # API-only (no frontend)
+spinx new my-app --version=1.0.0             # Specific framework release
+spinx new my-app --frontend=vue -n           # Non-interactive (CI/CD)
+```
+
+---
+
+### Alternative: Direct Composer Project Creation
+
+```bash
+composer create-project spinxphp/framework my-app
+cd my-app
+php spinx serve
 ```
 
 ### System Requirements

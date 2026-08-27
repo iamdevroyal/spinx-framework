@@ -7,7 +7,7 @@
 <h1 align="center">Spinx Framework</h1>
 
 <p align="center">
-  <strong>The High-Performance PHP Framework for Persistent Workers, Enforced DDD, Universal Queues, Real-Time WebSockets, and Autonomous AI Generation.</strong>
+  <strong>The Modern High-Performance PHP Framework for Persistent Workers, Enforced DDD Architecture, Universal Queues, Real-Time WebSockets, and Autonomous AI Generation.</strong>
 </p>
 
 <p align="center">
@@ -44,15 +44,36 @@ Spinx enforces strict **Domain-Driven Design (DDD) module boundaries**, includes
 
 ## 🚀 Quickstart & Installation
 
+### Recommended — Global Installer
+
 ```bash
-# 1. Create a new Spinx project
-spinx new my-app --frontend=vue
+# 1. Install the global Spinx installer
+composer global require spinxphp/installer
 
-# 2. Enter project directory
+# 2. Create a new Spinx application (interactive wizard)
+spinx new my-app
+
+# 3. Enter project directory & start development
 cd my-app
+php spinx serve
+```
 
-# 3. Boot backend runtime + Vite HMR dev server
-spinx serve
+**Frontend options:**
+```bash
+spinx new my-app --frontend=vue              # Vue 3 + Vite (default)
+spinx new my-app --frontend=react            # React 19 + Vite
+spinx new my-app --frontend=none             # API only (no frontend)
+spinx new my-app --frontend=vue -n           # Non-interactive (CI/CD)
+```
+
+---
+
+### Alternative — Direct Composer Install
+
+```bash
+composer create-project spinxphp/framework my-app
+cd my-app
+php spinx serve
 ```
 
 ---

@@ -11,12 +11,12 @@ export const InstallStrip: React.FC<InstallStripProps> = ({
   onOpenPlayground,
   onOpenDocs,
 }) => {
-  const [activeTab, setActiveTab] = useState<'composer' | 'cli' | 'docker'>('composer');
+  const [activeTab, setActiveTab] = useState<'cli' | 'composer' | 'docker'>('cli');
   const [copied, setCopied] = useState(false);
 
   const installCommands = {
+    cli: `composer global require spinxphp/installer\nspinx new my-app --frontend=vue\ncd my-app\nphp spinx serve`,
     composer: `composer create-project spinxphp/framework my-app\ncd my-app\nphp spinx serve`,
-    cli: `spinx new my-app --frontend=vue\ncd my-app\nspinx serve`,
     docker: `docker run -d -p 8080:8080 spinxphp/runtime:latest\ncurl http://localhost:8080/health`,
   };
 
@@ -70,20 +70,20 @@ export const InstallStrip: React.FC<InstallStripProps> = ({
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 text-[#A1A1AA]">
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => setActiveTab('cli')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-mono-code transition-colors ${
+                      activeTab === 'cli' ? 'bg-[#E11D63]/20 text-white font-bold border border-[#E11D63]/40' : 'hover:text-white'
+                    }`}
+                  >
+                    Global Installer
+                  </button>
+                  <button
                     onClick={() => setActiveTab('composer')}
                     className={`px-2.5 py-1 rounded text-[11px] font-mono-code transition-colors ${
                       activeTab === 'composer' ? 'bg-[#E11D63]/20 text-white font-bold border border-[#E11D63]/40' : 'hover:text-white'
                     }`}
                   >
                     Composer
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('cli')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-mono-code transition-colors ${
-                      activeTab === 'cli' ? 'bg-[#E11D63]/20 text-white font-bold border border-[#E11D63]/40' : 'hover:text-white'
-                    }`}
-                  >
-                    Spinx CLI
                   </button>
                   <button
                     onClick={() => setActiveTab('docker')}

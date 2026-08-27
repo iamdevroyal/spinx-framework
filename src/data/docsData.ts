@@ -50,7 +50,132 @@ export const DOC_CATEGORIES = [
 
 export const DOCS_DATA: DocArticle[] = [
   // ─────────────────────────────────────────────────────────────────────────
-  // 1. Introduction
+  // 1a. Quickstart & Installation
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: 'quickstart',
+    path: '/docs/quickstart',
+    category: 'Getting Started',
+    title: 'Quickstart & Installation',
+    subtitle: 'Get up and running with Spinx in seconds using the official global installer or Composer.',
+    description: 'Learn how to install the official spinxphp/installer global binary, scaffold a new application with Vue 3 or React 19, and launch the RoadRunner persistent execution server.',
+    readTime: '4 min read',
+    lastUpdated: 'v1.0.17 (Latest)',
+    badge: 'Quickstart',
+    headings: [
+      { id: 'global-installer', title: 'Recommended: Global Installer', level: 2 },
+      { id: 'cli-options', title: 'CLI Flags & Presets', level: 2 },
+      { id: 'direct-composer', title: 'Alternative: Direct Composer Install', level: 2 },
+      { id: 'local-commands', title: 'Local Development & Serving', level: 2 },
+      { id: 'system-requirements', title: 'System Requirements', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'global-installer',
+        headingTitle: 'Recommended: Global Installer',
+        content: `The fastest and cleanest way to create new Spinx applications is with the official global installer package. Install it once via Composer:
+
+\`\`\`bash
+composer global require spinxphp/installer
+\`\`\`
+
+Make sure your Composer global bin directory is in your PATH. Once installed, you can create a brand new application from anywhere:
+
+\`\`\`bash
+spinx new my-app
+\`\`\`
+
+Composer will automatically trigger Spinx's interactive setup wizard, configuring your application name, frontend framework, database driver (SQLite, MySQL, PostgreSQL), and runtime worker (RoadRunner or Swoole).`,
+        codeSnippet: {
+          title: 'Terminal — Global Installation',
+          language: 'bash',
+          code: `# 1. Install global installer
+composer global require spinxphp/installer
+
+# 2. Scaffold new application
+spinx new my-app
+
+# 3. Start development
+cd my-app
+php spinx serve`,
+        },
+        callout: {
+          type: 'tip',
+          title: 'Zero Boot Overhead',
+          message: 'RoadRunner downloads automatically via vendor/bin/rr get during setup. When you run php spinx serve, the Go supervisor and Vite HMR dev server boot concurrently.',
+        },
+      },
+      {
+        headingId: 'cli-options',
+        headingTitle: 'CLI Flags & Presets',
+        content: `Customize your new application during scaffolding using CLI options:`,
+        tableData: {
+          headers: ['Command', 'Description'],
+          rows: [
+            ['spinx new my-app --frontend=vue', 'Scaffold with Vue 3 + Vite (default)'],
+            ['spinx new my-app --frontend=react', 'Scaffold with React 19 + Vite'],
+            ['spinx new my-app --frontend=none', 'API-only mode (no frontend assets)'],
+            ['spinx new my-app --version=1.0.0', 'Install specific framework version'],
+            ['spinx new my-app --frontend=vue -n', 'Non-interactive headless mode (CI/CD)'],
+          ],
+        },
+      },
+      {
+        headingId: 'direct-composer',
+        headingTitle: 'Alternative: Direct Composer Install',
+        content: `If you prefer not to install global binaries, you can create a new project directly with Composer:
+
+\`\`\`bash
+composer create-project spinxphp/framework my-app
+cd my-app
+php spinx serve
+\`\`\`
+
+The exact same interactive setup wizard will execute via the framework's post-create-project hook.`,
+      },
+      {
+        headingId: 'local-commands',
+        headingTitle: 'Local Development & Serving',
+        content: `Inside your project directory, all commands are managed by the local Spinx CLI:`,
+        codeSnippet: {
+          title: 'Core Development Commands',
+          language: 'bash',
+          code: `# Start RoadRunner + Vite HMR
+php spinx serve
+
+# Scaffold DDD module with all layers
+php spinx make:module Orders --all
+
+# Run database migrations
+php spinx migrate
+
+# Start priority queue worker daemon
+php spinx queue:work
+
+# Autonomous AI feature build
+php spinx ai:build "Build a subscription billing module"`,
+        },
+      },
+      {
+        headingId: 'system-requirements',
+        headingTitle: 'System Requirements',
+        content: `Spinx is designed for modern, high-performance execution environments:`,
+        tableData: {
+          headers: ['Requirement', 'Minimum Version', 'Notes'],
+          rows: [
+            ['PHP', '>= 8.2', 'Uses typed properties, enums, and fibers'],
+            ['Composer', '>= 2.0', 'Package management'],
+            ['Extensions', 'mbstring, pdo, json', 'pdo_sqlite (default), pdo_mysql, pdo_pgsql'],
+            ['Node.js', '>= 18.0', 'Required for Vite frontend asset pipeline'],
+            ['RoadRunner', 'Latest', 'Auto-downloaded via vendor/bin/rr get'],
+          ],
+        },
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 1b. Introduction
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: 'introduction',
