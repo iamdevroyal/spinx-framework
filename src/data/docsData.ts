@@ -7,7 +7,7 @@ export interface DocHeading {
 export interface DocArticle {
   id: string;
   path: string;
-  category: 'Getting Started' | 'AI Builder' | 'Core Concepts' | 'Backend & Services' | 'Frontend & Islands' | 'API & Reference' | 'Guides & Examples';
+  category: 'Getting Started' | 'AI Builder' | 'Core Concepts' | 'Backend & Services' | 'Async & Real-Time' | 'Security' | 'Frontend & Islands' | 'API & Reference' | 'Guides & Examples';
   title: string;
   subtitle: string;
   description: string;
@@ -41,6 +41,8 @@ export const DOC_CATEGORIES = [
   'AI Builder',
   'Core Concepts',
   'Backend & Services',
+  'Async & Real-Time',
+  'Security',
   'Frontend & Islands',
   'API & Reference',
   'Guides & Examples',
@@ -58,7 +60,7 @@ export const DOCS_DATA: DocArticle[] = [
     subtitle: 'The modern PHP engine for persistent workers, enforced DDD architecture, and reactive island hydration.',
     description: 'Spinx is a next-generation full-stack PHP framework engineered for extreme performance, clean domain-driven architecture, and autonomous AI-assisted development.',
     readTime: '5 min read',
-    lastUpdated: 'v1.0.16 (Latest)',
+    lastUpdated: 'v1.0.17 (Latest)',
     badge: 'Core Reference',
     headings: [
       { id: 'overview', title: 'Framework Overview', level: 2 },
@@ -838,6 +840,699 @@ $ids = cache('featured_ids');`,
             ['spinx migrate [Name]', 'Run pending database migrations.'],
             ['spinx schema:compile', 'Introspect database schema and write storage/cache/schema_columns.php.'],
           ],
+        },
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // NEW: Asynchronous Queues & Worker Daemons
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: 'queues',
+    path: '/docs/queues',
+    category: 'Async & Real-Time',
+    title: 'Asynchronous Queues & Worker Daemons',
+    subtitle: 'Priority background job processing with HMAC cryptographic signing and RCE defense.',
+    description: 'Process heavy workloads asynchronously with Spinx universal queue system — supporting Database, Redis, and Sync drivers with priority ordering, delayed dispatch, and retry backoffs.',
+    readTime: '6 min read',
+    lastUpdated: 'v1.0.17 (New Feature)',
+    badge: 'New in v1.0.17',
+    headings: [
+      { id: 'queue-overview', title: 'Queue Overview', level: 2 },
+      { id: 'defining-jobs', title: 'Defining Queueable Jobs', level: 2 },
+      { id: 'dispatching', title: 'Dispatching Jobs', level: 2 },
+      { id: 'queue-drivers', title: 'Queue Drivers & Configuration', level: 2 },
+      { id: 'worker-daemons', title: 'Running Worker Daemons', level: 2 },
+      { id: 'queue-security', title: 'Cryptographic Payload Signing', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'queue-overview',
+        headingTitle: 'Queue Overview',
+        content: `Spinx includes a first-class asynchronous job queue built for persistent-process runtimes. Jobs are dispatched from HTTP request handlers and processed by separate long-running worker daemons — keeping your API responses fast and deferring expensive tasks like sending emails, generating PDFs, syncing external APIs, or processing payments to the background.\n\nThree drivers are available out of the box: Database (default — zero extra infrastructure), Redis (distributed atomic counters across worker pools), and Sync (immediate in-process execution for testing).`,
+        callout: {
+          type: 'performance',
+          title: 'Non-Blocking HTTP Responses',
+          message: 'Queue::push() returns immediately. The job serialization and database insert takes < 1ms, keeping your HTTP response times unaffected.',
+        },
+      },
+      {
+        headingId: 'defining-jobs',
+        headingTitle: 'Defining Queueable Jobs',
+        content: `Jobs live in app/Modules/<Name>/Application/Jobs/ and implement the Spinx\\Queue\\Job interface with a single handle() method. Only lightweight serializable primitives (IDs, strings, scalars) should be stored in the constructor — resolve full objects from the DI container inside handle().`,
+        codeSnippet: {
+          title: 'app/Modules/Billing/Application/Jobs/ProcessInvoiceJob.php',
+          language: 'php',
+          code: `<?php
+
+declare(strict_types=1);
+
+namespace App\\Modules\\Billing\\Application\\Jobs;
+
+use Spinx\\Queue\\Job;
+
+final class ProcessInvoiceJob implements Job
+{
+    public function __construct(
+        public readonly int \$invoiceId,
+    ) {}
+
+    public function handle(): void
+    {
+        // Resolve dependencies from DI container inside handle()
+        \$invoices = \\Spinx\\Kernel\\Kernel::getContainer()
+            ->get(InvoiceRepositoryInterface::class);
+
+        \$invoice = \$invoices->findById(\$this->invoiceId);
+        \$invoice->markAsProcessed();
+        \$invoices->save(\$invoice);
+    }
+}`,
+        },
+      },
+      {
+        headingId: 'dispatching',
+        headingTitle: 'Dispatching Jobs',
+        content: 'Dispatch jobs using the Queue:: facade from any controller, service, or event handler:',
+        codeSnippet: {
+          title: 'Dispatching with priority and delay',
+          language: 'php',
+          code: `use Spinx\\Queue\\Queue;
+
+// Default queue
+Queue::push(new ProcessInvoiceJob(\$invoiceId));
+
+// Named queue with priority (higher = processed first)
+Queue::onQueue('billing')->withPriority(10)->push(new ProcessInvoiceJob(\$invoiceId));
+
+// Delayed execution (seconds)
+Queue::later(60, new ProcessInvoiceJob(\$invoiceId));
+
+// Priority + delay combined
+Queue::onQueue('high')->withPriority(20)->later(300, new SendReportJob(\$reportId));`,
+        },
+      },
+      {
+        headingId: 'queue-drivers',
+        headingTitle: 'Queue Drivers & Configuration',
+        content: 'Configure your queue driver in config/queue.php and .env:',
+        codeSnippet: {
+          title: 'config/queue.php',
+          language: 'php',
+          code: `return [
+    'default' => env('QUEUE_CONNECTION', 'database'),
+
+    'connections' => [
+        'sync'     => ['driver' => 'sync'],
+        'database' => [
+            'driver'      => 'database',
+            'table'       => 'spinx_jobs',
+            'queue'       => 'default',
+            'retry_after' => 300,
+        ],
+        'redis' => [
+            'driver'      => 'redis',
+            'connection'  => 'queue',
+            'queue'       => 'default',
+            'retry_after' => 300,
+        ],
+    ],
+];`,
+        },
+        tableData: {
+          headers: ['Driver', 'Env Value', 'Best For'],
+          rows: [
+            ['Sync', 'QUEUE_CONNECTION=sync', 'Local development and testing'],
+            ['Database', 'QUEUE_CONNECTION=database', 'Single-server apps, zero extra infra'],
+            ['Redis', 'QUEUE_CONNECTION=redis', 'Multi-server, high throughput, atomic counters'],
+          ],
+        },
+      },
+      {
+        headingId: 'worker-daemons',
+        headingTitle: 'Running Worker Daemons',
+        content: 'Start queue worker daemons using the Spinx CLI. Workers poll for due jobs, execute them, and loop until stopped:',
+        codeSnippet: {
+          title: 'Starting worker daemons',
+          language: 'bash',
+          code: `# Start default queue worker
+php spinx queue:work
+
+# Process multiple queues in priority order (high → billing → default)
+php spinx queue:work --queue=high,billing,default
+
+# Supervisord config for production
+[program:spinx-worker]
+command=php /var/www/spinx queue:work --queue=high,default
+numprocs=4
+autostart=true
+autorestart=true`,
+        },
+      },
+      {
+        headingId: 'queue-security',
+        headingTitle: 'Cryptographic Payload Signing',
+        content: `Spinx protects against PHP Object Injection / Remote Code Execution (RCE) attacks by signing every serialized queue payload with HMAC-SHA256 using APP_KEY before it is stored. Workers verify the signature before calling unserialize(). Any tampered or forged payload is rejected and logged immediately — the deserialization call never executes.`,
+        callout: {
+          type: 'warning',
+          title: 'Never Manually Deserialize Queue Payloads',
+          message: 'Always use Queue::push() — bypassing it to insert raw serialized payloads directly into spinx_jobs breaks the HMAC verification chain and exposes your application to RCE.',
+        },
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // NEW: Real-Time Broadcasting
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: 'broadcasting',
+    path: '/docs/broadcasting',
+    category: 'Async & Real-Time',
+    title: 'Real-Time Event Broadcasting (WebSockets)',
+    subtitle: 'Stream server-side events to browsers instantly over WebSockets using the Pusher protocol.',
+    description: 'Broadcast domain events to authenticated WebSocket subscribers in real time. Spinx is 100% compatible with Soketi, Pusher Cloud, and Laravel Reverb — no heavy SDKs required.',
+    readTime: '5 min read',
+    lastUpdated: 'v1.0.17 (New Feature)',
+    badge: 'New in v1.0.17',
+    headings: [
+      { id: 'broadcasting-overview', title: 'Broadcasting Overview', level: 2 },
+      { id: 'should-broadcast', title: 'ShouldBroadcast Interface', level: 2 },
+      { id: 'channel-types', title: 'Channel Types', level: 2 },
+      { id: 'channel-auth', title: 'Channel Authorization', level: 2 },
+      { id: 'drivers', title: 'Broadcast Drivers', level: 2 },
+      { id: 'frontend-client', title: 'Frontend Client Setup', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'broadcasting-overview',
+        headingTitle: 'Broadcasting Overview',
+        content: `Spinx Broadcasting lets your server push events to browser clients the moment they happen — no polling required. The system uses the Pusher protocol, making it compatible with any Pusher-compatible WebSocket server.\n\nRecommended local stack: Soketi (available as a standalone binary or npm package — no Docker required). For cloud: Pusher.com or Laravel Reverb.`,
+        tableData: {
+          headers: ['Driver', 'BROADCAST_DRIVER', 'Best For'],
+          rows: [
+            ['Pusher/Soketi', 'pusher', 'Production and local dev with a WebSocket server'],
+            ['Log', 'log', 'Development debugging without a WebSocket server'],
+            ['Null', 'null', 'Testing environments where events should be silently dropped'],
+          ],
+        },
+      },
+      {
+        headingId: 'should-broadcast',
+        headingTitle: 'ShouldBroadcast Interface',
+        content: 'Implement ShouldBroadcast on any domain event to make it broadcastable. Broadcast::event() dispatches it:',
+        codeSnippet: {
+          title: 'InvoicePaidEvent.php',
+          language: 'php',
+          code: `use Spinx\\Broadcasting\\{PrivateChannel, ShouldBroadcast};
+
+final class InvoicePaidEvent implements ShouldBroadcast
+{
+    public function __construct(
+        public readonly int \$invoiceId,
+        public readonly float \$amount,
+    ) {}
+
+    public function broadcastOn(): PrivateChannel
+    {
+        return new PrivateChannel('invoices.' . \$this->invoiceId);
+    }
+
+    public function broadcastWith(): array
+    {
+        return ['id' => \$this->invoiceId, 'amount' => \$this->amount, 'status' => 'paid'];
+    }
+}
+
+// Dispatch from a controller or service:
+Broadcast::event(new InvoicePaidEvent(42, 199.99));`,
+        },
+      },
+      {
+        headingId: 'channel-types',
+        headingTitle: 'Channel Types',
+        content: 'Spinx supports three channel types matching the Pusher protocol:',
+        tableData: {
+          headers: ['Type', 'Class', 'Access', 'Use Case'],
+          rows: [
+            ['Public', 'Channel', 'Anyone', 'Global announcements, ticker feeds'],
+            ['Private', 'PrivateChannel', 'Authenticated users via callback', 'User-specific events (invoices, notifications)'],
+            ['Presence', 'PresenceChannel', 'Authenticated + user info returned', 'Live user lists, collaboration cursors'],
+          ],
+        },
+      },
+      {
+        headingId: 'channel-auth',
+        headingTitle: 'Channel Authorization',
+        content: 'Register auth callbacks using pattern-matching channel names. The native auth endpoint POST /_spinx/broadcasting/auth handles Pusher auth requests automatically:',
+        codeSnippet: {
+          title: 'module.php — Channel Authorization',
+          language: 'php',
+          code: `use Spinx\\Broadcasting\\Broadcast;
+
+Broadcast::channelAuth('invoices.{id}', function (?object \$user, int \$invoiceId): bool {
+    return \$user !== null && \$user->id === \$invoiceId;
+});
+
+// Presence channel — return user info array
+Broadcast::channelAuth('chat.room.{id}', function (?object \$user): array|false {
+    return \$user ? ['user_id' => \$user->id, 'user_info' => ['name' => \$user->name]] : false;
+});`,
+        },
+      },
+      {
+        headingId: 'drivers',
+        headingTitle: 'Broadcast Drivers',
+        content: 'Configure broadcasting in config/broadcasting.php and .env:',
+        codeSnippet: {
+          title: '.env — Soketi configuration',
+          language: 'bash',
+          code: `BROADCAST_DRIVER=pusher
+PUSHER_APP_ID=spinx-local
+PUSHER_APP_KEY=spinx-app-key
+PUSHER_APP_SECRET=spinx-app-secret
+PUSHER_HOST=127.0.0.1
+PUSHER_PORT=6001
+PUSHER_SCHEME=http`,
+        },
+        callout: {
+          type: 'tip',
+          title: 'Soketi — No Docker Required',
+          message: 'Install Soketi globally: npm install -g @soketi/soketi — then run: soketi start. Works on Linux, macOS, and Windows without Docker.',
+        },
+      },
+      {
+        headingId: 'frontend-client',
+        headingTitle: 'Frontend Client Setup',
+        content: 'Connect from the Vue/React frontend using Laravel Echo + Pusher JS:',
+        codeSnippet: {
+          title: 'frontend/echo.ts',
+          language: 'typescript',
+          code: `import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+
+window.Pusher = Pusher;
+
+export const echo = new Echo({
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_PUSHER_APP_KEY,
+    wsHost: import.meta.env.VITE_PUSHER_HOST,
+    wsPort: Number(import.meta.env.VITE_PUSHER_PORT),
+    forceTLS: false,
+    disableStats: true,
+    authEndpoint: '/_spinx/broadcasting/auth',
+});
+
+// Listen on a private channel
+echo.private('invoices.42').listen('InvoicePaidEvent', (e: any) => {
+    console.log('Invoice paid:', e);
+});`,
+        },
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // NEW: Multi-Disk Storage
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: 'storage',
+    path: '/docs/storage',
+    category: 'Backend & Services',
+    title: 'Multi-Disk Filesystem & Cloud Storage',
+    subtitle: 'Unified Storage:: facade across local disks and S3-compatible cloud providers.',
+    description: 'Store, retrieve, and manage files across local disk and cloud providers (AWS S3, Cloudflare R2, MinIO, Wasabi) using a clean, unified API with built-in path traversal protection and signed temporary URLs.',
+    readTime: '4 min read',
+    lastUpdated: 'v1.0.17 (New Feature)',
+    badge: 'New in v1.0.17',
+    headings: [
+      { id: 'storage-overview', title: 'Storage Overview', level: 2 },
+      { id: 'storage-operations', title: 'File Operations', level: 2 },
+      { id: 'signed-urls', title: 'Temporary Signed URLs', level: 2 },
+      { id: 'storage-config', title: 'Disk Configuration', level: 2 },
+      { id: 'storage-security', title: 'Path Traversal Defense', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'storage-overview',
+        headingTitle: 'Storage Overview',
+        content: 'The Storage:: facade provides a unified API for reading and writing files regardless of the underlying storage driver. Switch from local development to S3-compatible cloud storage by changing a single environment variable — no code changes required.',
+        tableData: {
+          headers: ['Driver', 'FILESYSTEM_DISK', 'Providers'],
+          rows: [
+            ['local', 'local', 'Server filesystem (storage/app/)'],
+            ['s3', 's3', 'AWS S3, Cloudflare R2, MinIO, DigitalOcean Spaces, Wasabi'],
+          ],
+        },
+      },
+      {
+        headingId: 'storage-operations',
+        headingTitle: 'File Operations',
+        content: 'Common file operations available on every disk:',
+        codeSnippet: {
+          title: 'Storage operations',
+          language: 'php',
+          code: `use Spinx\\Filesystem\\Storage;
+
+// Write
+Storage::put('reports/2026-q3.pdf', \$pdfContent);
+Storage::disk('s3')->put('exports/data.csv', \$csv);
+
+// Read
+\$content = Storage::get('reports/2026-q3.pdf');
+
+// Check existence
+if (Storage::exists('avatars/user_42.png')) { ... }
+
+// Delete
+Storage::delete('tmp/old.txt');
+
+// List directory
+\$files = Storage::disk('local')->files('reports/');`,
+        },
+      },
+      {
+        headingId: 'signed-urls',
+        headingTitle: 'Temporary Signed URLs',
+        content: 'Generate time-limited HMAC-signed download URLs for private files without exposing the file path or requiring authentication on the storage provider:',
+        codeSnippet: {
+          title: 'Generating signed URLs',
+          language: 'php',
+          code: `// Generate URL valid for 2 hours
+\$url = Storage::disk('s3')->temporaryUrl(
+    'contracts/nda_agreement.pdf',
+    now()->addHours(2)
+);
+
+// Local disk signed URL (verified by Spinx middleware)
+\$localUrl = Storage::disk('local')->temporaryUrl('reports/private.pdf', now()->addMinutes(30));`,
+        },
+      },
+      {
+        headingId: 'storage-config',
+        headingTitle: 'Disk Configuration',
+        content: 'Define disks in config/filesystem.php. Multiple disks can be defined simultaneously:',
+        codeSnippet: {
+          title: 'config/filesystem.php',
+          language: 'php',
+          code: `return [
+    'default' => env('FILESYSTEM_DISK', 'local'),
+    'disks' => [
+        'local' => [
+            'driver' => 'local',
+            'root'   => storage_path('app'),
+        ],
+        's3' => [
+            'driver'   => 's3',
+            'key'      => env('AWS_ACCESS_KEY_ID'),
+            'secret'   => env('AWS_SECRET_ACCESS_KEY'),
+            'region'   => env('AWS_DEFAULT_REGION', 'us-east-1'),
+            'bucket'   => env('AWS_BUCKET'),
+            'endpoint' => env('AWS_ENDPOINT'), // Cloudflare R2 or MinIO URL
+        ],
+    ],
+];`,
+        },
+      },
+      {
+        headingId: 'storage-security',
+        headingTitle: 'Path Traversal Defense',
+        content: 'The LocalFilesystemDriver automatically defends against directory traversal attacks. Paths are inspected segment-by-segment and any .. traversal sequences throw an InvalidArgumentException — your storage root can never be escaped.',
+        callout: {
+          type: 'note',
+          title: 'Built-in Path Jail',
+          message: 'Storage::get("../../.env") — this call throws InvalidArgumentException at the framework level, before any filesystem I/O occurs. Null-byte injection (\\0) and Windows backslash traversal (..\\\\..\\ ) are also handled.',
+        },
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // NEW: Vector Search
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: 'vector-search',
+    path: '/docs/vector-search',
+    category: 'Backend & Services',
+    title: 'Semantic Vector Search',
+    subtitle: 'AI-native semantic search using OpenAI/Ollama embeddings and PostgreSQL pgvector.',
+    description: 'Generate text embeddings and run lightning-fast cosine similarity queries over your database using the Vector:: facade and native pgvector schema extensions.',
+    readTime: '5 min read',
+    lastUpdated: 'v1.0.17 (New Feature)',
+    badge: 'AI Native',
+    headings: [
+      { id: 'vector-overview', title: 'Vector Search Overview', level: 2 },
+      { id: 'embedding', title: 'Generating Embeddings', level: 2 },
+      { id: 'vector-query', title: 'Similarity Search Queries', level: 2 },
+      { id: 'vector-migrations', title: 'Database Migrations', level: 2 },
+      { id: 'vector-config', title: 'Configuration', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'vector-overview',
+        headingTitle: 'Vector Search Overview',
+        content: `Spinx integrates natively with pgvector (PostgreSQL extension) to enable semantic AI search inside your existing database. Use it to build knowledge bases, smart document search, AI recommendation engines, or RAG (Retrieval-Augmented Generation) pipelines.\n\nEmbeddings are generated via OpenAI (text-embedding-3-small, 1536 dimensions by default) or local Ollama models.`,
+        callout: {
+          type: 'note',
+          title: 'PostgreSQL Required',
+          message: 'Vector search requires PostgreSQL >= 14 with the pgvector extension. Run $schema->enableExtension(\'vector\') in a migration to install it automatically.',
+        },
+      },
+      {
+        headingId: 'embedding',
+        headingTitle: 'Generating Embeddings',
+        content: 'Generate a float-array embedding from any text string using the Vector:: facade:',
+        codeSnippet: {
+          title: 'Generating embeddings',
+          language: 'php',
+          code: `use Spinx\\Database\\Vector\\Vector;
+
+// Generate 1536-dimensional OpenAI embedding
+\$embedding = Vector::embed('Domain-Driven Design in persistent PHP workers');
+// Returns: [-0.0124, 0.0841, -0.0039, ... 1536 floats]
+
+// Store it in a migration-created vector column
+\$db->insert('knowledge_base', [
+    'title'     => 'DDD in PHP',
+    'embedding' => Vector::formatVector(\$embedding), // '[−0.012,0.084,...]'
+]);`,
+        },
+      },
+      {
+        headingId: 'vector-query',
+        headingTitle: 'Similarity Search Queries',
+        content: 'Search for the most semantically similar records using distance metrics:',
+        codeSnippet: {
+          title: 'Cosine similarity search',
+          language: 'php',
+          code: `\$results = Vector::search(
+    table: 'knowledge_base',
+    vectorColumn: 'embedding',
+    queryVector: Vector::embed('How does Spinx handle memory isolation?'),
+    filters: ['status' => 'published'],
+    limit: 5,
+    metric: 'cosine', // 'cosine' (<=>), 'l2' (<->), 'inner_product' (<#>)
+);
+
+foreach (\$results as \$doc) {
+    echo \$doc['title'] . ' — distance: ' . \$doc['_distance'];
+}`,
+        },
+        tableData: {
+          headers: ['Metric', 'SQL Operator', 'Best For'],
+          rows: [
+            ['cosine', '<=>', 'Text similarity (most common for NLP)'],
+            ['l2', '<->', 'Geometric distance in embedding space'],
+            ['inner_product', '<#>', 'Dot product — normalized vectors'],
+          ],
+        },
+      },
+      {
+        headingId: 'vector-migrations',
+        headingTitle: 'Database Migrations',
+        content: 'Use the built-in Blueprint extensions to create vector columns and enable pgvector:',
+        codeSnippet: {
+          title: 'Migration with vector column',
+          language: 'php',
+          code: `public function up(SchemaBuilder \$schema): void
+{
+    // Enable pgvector on PostgreSQL
+    \$schema->enableExtension('vector');
+
+    \$schema->create('knowledge_base', function (Blueprint \$table) {
+        \$table->id();
+        \$table->uuid('uuid');               // Native UUID column
+        \$table->string('title');
+        \$table->text('content');
+        \$table->vector('embedding', 1536);  // pgvector column
+        \$table->timestamps();
+    });
+}`,
+        },
+      },
+      {
+        headingId: 'vector-config',
+        headingTitle: 'Configuration',
+        content: 'Set your embedding provider and model in config/vector.php:',
+        codeSnippet: {
+          title: 'config/vector.php',
+          language: 'php',
+          code: `return [
+    'default' => env('VECTOR_DRIVER', 'openai'),
+    'drivers' => [
+        'openai' => [
+            'api_key'    => env('OPENAI_API_KEY'),
+            'model'      => env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
+            'dimensions' => 1536,
+        ],
+        'ollama' => [
+            'base_url'   => env('OLLAMA_BASE_URL', 'http://localhost:11434/v1'),
+            'model'      => env('OLLAMA_EMBEDDING_MODEL', 'nomic-embed-text'),
+            'dimensions' => 768,
+        ],
+    ],
+];`,
+        },
+      },
+    ],
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // NEW: Security & Hardening
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: 'security-hardening',
+    path: '/docs/security-hardening',
+    category: 'Security',
+    title: 'Production Security & Hardening',
+    subtitle: 'Eight attack vectors addressed at the framework level — so your apps are safe by default.',
+    description: 'Spinx defends against RCE via deserialization, path traversal, CORS origin reflection, CSRF state leak, SQL injection in order clauses, and shell injection — all enforced without any developer configuration.',
+    readTime: '6 min read',
+    lastUpdated: 'v1.0.17 (New Feature)',
+    badge: 'Security',
+    headings: [
+      { id: 'sec-overview', title: 'Security Architecture', level: 2 },
+      { id: 'queue-signing', title: 'Queue HMAC Signing (Anti-RCE)', level: 2 },
+      { id: 'path-traversal', title: 'Path Traversal Defense', level: 2 },
+      { id: 'cors-security', title: 'Secure CORS Origin Matching', level: 2 },
+      { id: 'csrf-isolation', title: 'CSRF Token Coroutine Isolation', level: 2 },
+      { id: 'webhook-verification', title: 'Webhook Signature Verification', level: 2 },
+      { id: 'querybuilder-injection', title: 'SQL Injection Hardening', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'sec-overview',
+        headingTitle: 'Security Architecture',
+        content: 'Spinx v1.0.17 completed a comprehensive security audit covering all major attack surfaces. The following vulnerabilities were identified and patched directly in the framework — meaning every application built on Spinx inherits these protections automatically without developer action.',
+        tableData: {
+          headers: ['Attack Vector', 'Subsystem', 'Defense'],
+          rows: [
+            ['PHP Object Injection / RCE', 'Queue Drivers', 'HMAC-SHA256 payload signing with APP_KEY'],
+            ['Directory Traversal', 'LocalFilesystemDriver', 'Segment-by-segment .. detection and jailing'],
+            ['CORS Origin Reflection', 'CorsMiddleware', 'Wildcard + credentials combination blocked'],
+            ['CSRF State Leak (Persistent Workers)', 'Csrf.php + Kernel', 'Csrf::reset() in every request finally block'],
+            ['SQL Injection (ORDER BY)', 'QueryBuilder', 'Direction normalized to strict ASC/DESC whitelist'],
+            ['Shell Injection', 'SpinxCommandTool', 'escapeshellarg() on every tokenized argument'],
+            ['Public AI Endpoint Exposure', 'Kernel.php', 'AI routes disabled in APP_ENV=production'],
+            ['Distributed Rate Limit Drift', 'RateLimitMiddleware', 'Auto-resolves Redis atomic store in multi-worker'],
+          ],
+        },
+      },
+      {
+        headingId: 'queue-signing',
+        headingTitle: 'Queue HMAC Signing (Anti-RCE)',
+        content: 'PHP\'s unserialize() is a known RCE vector. Spinx eliminates this risk by signing every queue payload with HMAC-SHA256 before storage and verifying the signature before deserialization:',
+        codeSnippet: {
+          title: 'Payload structure (internal)',
+          language: 'json',
+          code: `{
+  "data": "<base64-encoded serialized job>",
+  "hmac": "<sha256 hex digest using APP_KEY>"
+}`,
+        },
+        callout: {
+          type: 'warning',
+          title: 'Keep APP_KEY Secret',
+          message: 'The queue signing key is derived from APP_KEY. Rotate it if compromised. Generate a strong key: php -r \'echo base64_encode(random_bytes(32));\' >> .env',
+        },
+      },
+      {
+        headingId: 'path-traversal',
+        headingTitle: 'Path Traversal Defense',
+        content: 'The LocalFilesystemDriver jails every path to the configured disk root. Any path component equal to .. triggers an immediate exception before any filesystem call is made:',
+        codeSnippet: {
+          title: 'Blocked traversal attempts',
+          language: 'php',
+          code: `// All of these throw \\InvalidArgumentException automatically:
+Storage::get('../../../.env');
+Storage::get('..\\\\..\\\\secret.php');   // Windows backslash
+Storage::get("dir/\\0/file.txt");        // Null-byte injection`,
+        },
+      },
+      {
+        headingId: 'cors-security',
+        headingTitle: 'Secure CORS Origin Matching',
+        content: 'Combining wildcard CORS (*) with allow_credentials: true is a critical misconfiguration that allows any website to make authenticated cross-origin requests. Spinx enforces the correct behavior:',
+        codeSnippet: {
+          title: 'config/cors.php — correct configuration',
+          language: 'php',
+          code: `return [
+    // CORRECT: explicit allowlist with credentials
+    'allowed_origins'  => ['https://app.mysite.com'],
+    'allow_credentials'=> true,
+
+    // WRONG — Spinx blocks this combination automatically:
+    // 'allowed_origins'  => ['*'],
+    // 'allow_credentials'=> true, ← wildcard + credentials → null origin returned
+];`,
+        },
+      },
+      {
+        headingId: 'csrf-isolation',
+        headingTitle: 'CSRF Token Coroutine Isolation',
+        content: `In persistent workers (RoadRunner/Swoole), static PHP properties persist across requests. Without explicit reset, a CSRF token from Request A could be accidentally returned to Request B.\n\nSpinx solves this with two mechanisms:\n1. Csrf::reset() is called automatically in Kernel::handle()\'s finally block after every request.\n2. In Swoole coroutine mode, CSRF tokens are keyed by coroutine ID — each concurrent coroutine gets an isolated token.`,
+        callout: {
+          type: 'performance',
+          title: 'Zero Performance Overhead',
+          message: 'Csrf::reset() is a single array unset operation — negligible cost on the critical request path.',
+        },
+      },
+      {
+        headingId: 'webhook-verification',
+        headingTitle: 'Webhook Signature Verification',
+        content: 'Verify incoming webhooks from Stripe, GitHub, Slack, or any HMAC-signing provider using HmacWebhookVerifier:',
+        codeSnippet: {
+          title: 'Stripe webhook verification',
+          language: 'php',
+          code: `use Spinx\\Webhooks\\HmacWebhookVerifier;
+
+\$verifier = new HmacWebhookVerifier(secret: env('STRIPE_WEBHOOK_SECRET'));
+
+// Verify Stripe-style timestamped signature header
+if (!\$verifier->verifyStripe(\$request, maxAgeSeconds: 300)) {
+    return Response::json(['error' => 'Invalid signature'], 403);
+}
+
+// Exempt the route from CSRF in module.php:
+RouteBuilder::post('/webhooks/stripe', StripeWebhookController::class)
+    ->withoutCsrf();`,
+        },
+      },
+      {
+        headingId: 'querybuilder-injection',
+        headingTitle: 'SQL Injection Hardening',
+        content: 'QueryBuilder::orderBy() sanitizes the direction parameter to prevent SQL injection in dynamic sort order expressions. Any value that is not DESC is normalized to ASC:',
+        codeSnippet: {
+          title: 'Direction sanitization',
+          language: 'php',
+          code: `// These all produce safe ORDER BY created_at ASC:
+\$query->orderBy('created_at', 'ASC; DROP TABLE users;');
+\$query->orderBy('created_at', "DESC\\n; --");
+\$query->orderBy('created_at', 'random_value');
+
+// Only valid values produce DESC:
+\$query->orderBy('created_at', 'DESC'); // ORDER BY created_at DESC`,
         },
       },
     ],
