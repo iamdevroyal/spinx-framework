@@ -665,3 +665,76 @@ use Spinx\OpenApi\Attributes\{OpenApiGet, OpenApiResponse};
 #[OpenApiResponse(200, description: 'Invoice retrieved', schema: InvoiceResource::class)]
 public function show(Request $request): JsonResponse { /* ... */ }
 ```
+
+---
+
+## 21. API Resources & Cursor-Based Pagination
+
+### 21a. JsonResource & ResourceCollection
+
+```php
+use Spinx\Http\Resources\JsonResource;
+
+final class ProjectResource extends JsonResource
+{
+    public function toArray(): array
+    {
+        return [
+            'id'         => $this->id,
+            'title'      => $this->title,
+            'author'     => $this->whenLoaded('author', fn() => new UserResource($this->author)),
+            'is_secret'  => $this->when($this->isOwner(), $this->is_secret),
+            'created_at' => $this->created_at?->format('c'),
+        ];
+    }
+}
+
+// Controller usage:
+return ProjectResource::make($project)->response();
+return ProjectResource::collection($projects)->response();
+```
+
+### 21b. Cursor Pagination (O(1) Scale)
+
+```php
+// Query with O(1) performance for mobile feeds & infinite scroll:
+$feed = Novel::cursorPaginate(perPage: 20, cursorCol: 'id', cursor: Request::input('cursor'));
+return NovelResource::collection($feed)->response();
+```
+
+---
+
+## 22. RFC 7807 Error Details, Idempotency & HTTP Caching
+
+### 22a. RFC 7807 Standard Error Details
+
+```php
+use Spinx\Http\Exceptions\{NotFoundHttpException, ForbiddenHttpException};
+
+throw new NotFoundHttpException('Book not found.', errorCode: 'BOOK_NOT_FOUND');
+// → Automatically formatted to RFC 7807 Problem Details JSON (application/problem+json)
+```
+
+### 22b. Mutation Idempotency
+
+```php
+// Protect against duplicate payment/AI charges via Idempotency-Key header:
+$routes->post('/api/v1/payments', [PaymentController::class, 'charge'])
+    ->middleware(['auth:api', 'idempotent']);
+```
+
+### 22c. HTTP 304 ETag Caching
+
+```php
+// Sub-0.1ms 304 Not Modified responses:
+$routes->get('/api/v1/feed', [FeedController::class, 'index'])
+    ->middleware('cache.headers:max_age=3600,etag');
+```
+
+### 22d. Interactive Scalar Docs Sandbox
+
+```php
+$routes->get('/api/docs', [\Spinx\OpenApi\ApiDocsController::class, 'docs']);
+// Visit http://localhost:8080/api/docs for modern interactive API docs
+```
+

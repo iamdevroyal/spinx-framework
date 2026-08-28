@@ -2232,5 +2232,232 @@ return [
       },
     ],
   },
+  // ─────────────────────────────────────────────────────────────────────────
+  // NEW: API Resources & Data Transformation (v1.0.24)
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: 'api-resources',
+    path: '/docs/api-resources',
+    category: 'Backend & Services',
+    title: 'API Resources & Transformation',
+    subtitle: 'Type-safe data mapping, conditional relationship loading, and cursor pagination envelopes.',
+    description: 'Transform database models into pristine JSON contracts using JsonResource and ResourceCollection, preventing data leaks, supporting conditional relationship evaluation, and delivering high-scale cursor pagination.',
+    readTime: '6 min read',
+    lastUpdated: 'v1.0.24 (Latest Feature)',
+    badge: 'API & Performance',
+    headings: [
+      { id: 'resources-overview', title: 'Why Use API Resources?', level: 2 },
+      { id: 'creating-resources', title: 'Creating a JsonResource', level: 2 },
+      { id: 'conditional-attributes', title: 'Conditional Attributes & Relationships', level: 2 },
+      { id: 'resource-collections', title: 'Resource Collections & Pagination', level: 2 },
+      { id: 'cursor-pagination', title: 'Cursor-Based Pagination (O(1))', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'resources-overview',
+        headingTitle: 'Why Use API Resources?',
+        content: `In production APIs, returning raw database models or manual associative arrays creates two serious risks:
+1. **Accidental Data Leakage**: Sensitive database columns (\`password_hash\`, \`stripe_customer_id\`, internal flags) can be leaked when models are converted directly to JSON.
+2. **Contract Fragility**: Database schema migrations break mobile apps or frontend clients if column names change.
+
+Spinx \`JsonResource\` provides a declarative transformation layer between your persistence models and HTTP responses.`,
+      },
+      {
+        headingId: 'creating-resources',
+        headingTitle: 'Creating a JsonResource',
+        content: `Define a resource in your module's \`Infrastructure/Http/Resources/\` directory:`,
+        codeSnippet: {
+          title: 'app/Modules/Projects/Infrastructure/Http/Resources/ProjectResource.php',
+          language: 'php',
+          code: `namespace App\\Modules\\Projects\\Infrastructure\\Http\\Resources;
+
+use Spinx\\Http\\Resources\\JsonResource;
+
+final class ProjectResource extends JsonResource
+{
+    public function toArray(): array
+    {
+        return [
+            'id'          => $this->id,
+            'title'       => $this->title,
+            'word_count'  => $this->word_count,
+            'author'      => $this->whenLoaded('author', fn() => new UserResource($this->author)),
+            'secret_key'  => $this->when($this->isOwner(), $this->secret_key),
+            'created_at'  => $this->created_at?->format('c'),
+        ];
+    }
+}
+
+// Controller usage:
+public function show(int $id): Response
+{
+    $project = Project::findOrFail($id);
+    return ProjectResource::make($project)->response();
+}`,
+        },
+      },
+      {
+        headingId: 'conditional-attributes',
+        headingTitle: 'Conditional Attributes & Relationships',
+        content: `Use \`$this->when()\` and \`$this->whenLoaded()\` to conditionally include fields based on permissions or eager-loaded relations. When the condition evaluates to false, Spinx automatically strips the key from the output payload:`,
+        codeSnippet: {
+          title: 'Conditional Loading Examples',
+          language: 'php',
+          code: `// Include only if user has admin role
+'financial_records' => $this->when($user->isAdmin(), $this->financial_records),
+
+// Include relationship only if already loaded in memory (zero extra SQL queries)
+'chapters' => ChapterResource::collection($this->whenLoaded('chapters')),
+
+// Include value only if not null
+'bio' => $this->whenNotNull($this->bio),`,
+        },
+      },
+      {
+        headingId: 'resource-collections',
+        headingTitle: 'Resource Collections & Pagination',
+        content: `Transform arrays or paginated collections using the static \`collection()\` method:`,
+        codeSnippet: {
+          title: 'Collection Responses',
+          language: 'php',
+          code: `public function index(): Response
+{
+    $projects = Project::query()->where('status', 'published')->paginate(15);
+
+    // Automatically includes data wrapping and pagination metadata
+    return ProjectResource::collection($projects)->response();
+}`,
+        },
+      },
+      {
+        headingId: 'cursor-pagination',
+        headingTitle: 'Cursor-Based Pagination (O(1))',
+        content: `For high-scale feeds, mobile apps, and infinite scroll APIs, standard offset pagination (\`OFFSET 10000 LIMIT 20\`) causes full table scans. 
+
+Spinx provides native **cursor-based pagination** (\`WHERE id > :cursor LIMIT 20\`) with constant $O(1)$ query complexity:`,
+        codeSnippet: {
+          title: 'Cursor Pagination Controller',
+          language: 'php',
+          code: `public function feed(): Response
+{
+    $cursor = Request::input('cursor'); // e.g. "eyJpZCI6MTB9"
+    $feed   = Project::cursorPaginate(perPage: 20, cursorCol: 'id', cursor: $cursor, direction: 'desc');
+
+    return ProjectResource::collection($feed)->response();
+}`,
+        },
+      },
+    ],
+  },
+  // ─────────────────────────────────────────────────────────────────────────
+  // NEW: RFC 7807 Error Handling, Idempotency & HTTP Caching (v1.0.24)
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: 'api-error-handling',
+    path: '/docs/api-error-handling',
+    category: 'Backend & Services',
+    title: 'Error Handling, Idempotency & Caching',
+    subtitle: 'RFC 7807 Problem Details, mutation idempotency keys, and sub-0.1ms HTTP 304 ETag caching.',
+    description: 'Learn how Spinx standardizes API error handling using RFC 7807 Problem Details, protects mutation endpoints with Idempotency-Key headers, and accelerates read APIs with automated 304 Not Modified caching.',
+    readTime: '7 min read',
+    lastUpdated: 'v1.0.24 (Latest Feature)',
+    badge: 'API & Performance',
+    headings: [
+      { id: 'rfc7807-overview', title: 'RFC 7807 Problem Details', level: 2 },
+      { id: 'typed-exceptions', title: 'Typed HTTP Exceptions', level: 2 },
+      { id: 'mutation-idempotency', title: 'Mutation Idempotency (Idempotency-Key)', level: 2 },
+      { id: 'http-caching', title: 'HTTP 304 ETag Caching (cache.headers)', level: 2 },
+      { id: 'scalar-docs', title: 'Interactive Scalar API Sandbox (/api/docs)', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'rfc7807-overview',
+        headingTitle: 'RFC 7807 Problem Details',
+        content: `Spinx implements the official IETF RFC 7807 standard for API error responses. Unhandled exceptions are automatically formatted as standard JSON problem details:`,
+        codeSnippet: {
+          title: 'Standard RFC 7807 Error Response',
+          language: 'json',
+          code: `{
+  "type": "https://spinx.dev/errors/validation-failed",
+  "title": "Unprocessable Entity",
+  "status": 422,
+  "detail": "The email field is required.",
+  "code": "VALIDATION_FAILED",
+  "errors": {
+    "email": ["The email field is required."]
+  },
+  "instance": "/api/v1/users",
+  "request_id": "req_a7b9c4d2"
+}`,
+        },
+      },
+      {
+        headingId: 'typed-exceptions',
+        headingTitle: 'Typed HTTP Exceptions',
+        content: `Throw typed HTTP exceptions anywhere in your application services or controllers:`,
+        codeSnippet: {
+          title: 'Throwing Typed HTTP Exceptions',
+          language: 'php',
+          code: `use Spinx\\Http\\Exceptions\\{
+    NotFoundHttpException,
+    UnauthorizedHttpException,
+    ForbiddenHttpException,
+    BadRequestHttpException,
+    TooManyRequestsHttpException
+};
+
+if (!$novel) {
+    throw new NotFoundHttpException('Novel not found.', errorCode: 'NOVEL_NOT_FOUND');
+}
+
+if (!$user->can('edit', $novel)) {
+    throw new ForbiddenHttpException('You cannot edit this novel.', errorCode: 'NOVEL_FORBIDDEN');
+}`,
+        },
+      },
+      {
+        headingId: 'mutation-idempotency',
+        headingTitle: 'Mutation Idempotency (Idempotency-Key)',
+        content: `Network dropouts or duplicate button clicks on payment or AI generation requests can cause duplicate operations.
+
+Attach the \`idempotent\` middleware alias to your mutation routes in \`module.php\`. Spinx inspects the \`Idempotency-Key\` header, caches the response in Redis/Cache for 24 hours, and returns cached replays immediately with an \`Idempotent-Replay: true\` header:`,
+        codeSnippet: {
+          title: 'app/Modules/Billing/module.php',
+          language: 'php',
+          code: `$routes->post('/api/v1/invoices/{id}/pay', [PaymentController::class, 'pay'])
+    ->middleware(['auth:api', 'idempotent']);`,
+        },
+      },
+      {
+        headingId: 'http-caching',
+        headingTitle: 'HTTP 304 ETag Caching (cache.headers)',
+        content: `For high-volume public or authenticated read endpoints, attach \`cache.headers\` middleware to enable automatic ETag calculation and \`304 Not Modified\` responses.
+
+Under RoadRunner, 304 responses execute in **sub-0.1ms** with zero memory allocation:`,
+        codeSnippet: {
+          title: '304 Caching in module.php',
+          language: 'php',
+          code: `$routes->get('/api/v1/books/{id}', [BookController::class, 'show'])
+    ->middleware('cache.headers:max_age=3600,etag');`,
+        },
+      },
+      {
+        headingId: 'scalar-docs',
+        headingTitle: 'Interactive Scalar API Sandbox (/api/docs)',
+        content: `Spinx includes a built-in interactive Scalar API Reference sandbox. Register the endpoint in your routes:`,
+        codeSnippet: {
+          title: 'Registering /api/docs',
+          language: 'php',
+          code: `use Spinx\\OpenApi\\ApiDocsController;
+
+// In module.php:
+$routes->get('/api/docs', [ApiDocsController::class, 'docs']);
+
+// Visit http://localhost:8080/api/docs in your browser to test endpoints interactively!`,
+        },
+      },
+    ],
+  },
 ];
+
 
