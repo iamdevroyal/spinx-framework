@@ -494,7 +494,97 @@ php spinx ai:dashboard   # Dev UI at http://localhost:8080/_spinx/ai
 
 ---
 
-## 18. CLI Reference
+## 18. API Authentication — Personal Access Tokens & JWT
+
+Spinx provides a dual-driver API authentication engine: **Personal Access Tokens (Sanctum pattern)** and **Stateless JWT**.
+
+### 18a. Personal Access Tokens (driver='token')
+
+```php
+// 1. Add HasApiTokens trait to your User model
+use Spinx\Auth\Traits\HasApiTokens;
+final class User extends Model { use HasApiTokens; }
+
+// 2. Issue token in ApiAuthController
+$user     = Auth::user();
+$newToken = $user->createToken('iPhone App', ['projects:read', 'chapters:write']);
+
+return Response::json([
+    'token_type'   => 'Bearer',
+    'access_token' => $newToken->plainTextToken, // Shown ONCE — "spinx_pat_1|abc..."
+]);
+
+// 3. Token abilities & revocation
+$user->tokenCan('projects:create');   // → true/false
+$user->revokeCurrentToken();           // Sign out current device
+$user->revokeTokens();                 // Sign out everywhere
+```
+
+### 18b. Stateless JWT (driver='jwt')
+
+```php
+use Spinx\Auth\Jwt\Jwt;
+
+// Issue access + refresh tokens
+$access  = Jwt::encode($user, ttlSeconds: 3600, claims: ['role' => 'author']);
+$refresh = Jwt::createRefreshToken($user, ttlSeconds: 2592000);
+
+// Verify (throws JwtException on failure)
+$payload = Jwt::decode($access);
+$userId  = $payload['sub'];
+
+// Safe verify (returns null on failure)
+$payload = Jwt::tryDecode($token);
+```
+
+### 18c. Route Protection (module.php)
+
+```php
+// Both drivers use the same 'auth:api' middleware
+$routes->group(['prefix' => '/api/v1', 'middleware' => ['auth:api']], function ($api) {
+    $api->get('/user',     [ApiUserController::class,    'profile']);
+    $api->post('/projects',[ApiProjectController::class, 'create'])
+        ->middleware('ability:projects:create');   // Scope gate
+});
+```
+
+### 18d. Headless / API-Only Backend
+
+```bash
+spinx new my-backend --frontend=none   # No Vue/React — pure JSON API
+```
+
+```php
+// config/cors.php — allow your frontend's origin
+return [
+    'allowed_origins'   => [env('FRONTEND_URL', 'http://localhost:3000')],
+    'allowed_methods'   => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    'allowed_headers'   => ['Content-Type', 'Authorization'],
+    'allow_credentials' => true,
+];
+```
+
+### 18e. Driver Configuration (.env / config/auth.php)
+
+```bash
+# .env
+API_AUTH_DRIVER=token   # or 'jwt'
+JWT_SECRET=your-secret-key
+```
+
+```php
+// config/auth.php
+'api' => [
+    'driver'     => env('API_AUTH_DRIVER', 'token'),
+    'jwt_secret' => env('JWT_SECRET', env('APP_KEY')),
+    'jwt_algo'   => 'HS256',
+    'jwt_ttl'    => 3600,
+],
+```
+
+---
+
+## 19. CLI Reference
 
 ```bash
 php spinx new <name> [--frontend=vue|react]   # Scaffold project

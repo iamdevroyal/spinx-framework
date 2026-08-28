@@ -2018,4 +2018,219 @@ Unlike traditional server-only template engines, Spinx Directives integrate serv
       },
     ],
   },
+  // ─────────────────────────────────────────────────────────────────────────
+  // NEW: API Authentication (Personal Access Tokens & Stateless JWT)
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: 'api-authentication',
+    path: '/docs/api-authentication',
+    category: 'Backend & Services',
+    title: 'API Authentication (Tokens & JWT)',
+    subtitle: 'Sanctum-style Personal Access Tokens, Stateless JWT, and Decoupled Headless Backend Architecture.',
+    description: 'Learn how to secure REST APIs in Spinx using Personal Access Tokens (PAT) with granular scopes, ultra-fast stateless JWT tokens with zero-database lookups, or build pure decoupled headless API backends paired with Next.js, React, Vue, or Mobile frontends.',
+    readTime: '7 min read',
+    lastUpdated: 'v1.0.22 (Latest Feature)',
+    badge: 'API & Auth',
+    headings: [
+      { id: 'api-overview', title: 'API Authentication Overview', level: 2 },
+      { id: 'headless-mode', title: 'Headless / Decoupled API-Only Mode', level: 2 },
+      { id: 'personal-access-tokens', title: 'Personal Access Tokens (PAT)', level: 2 },
+      { id: 'stateless-jwt', title: 'Stateless JSON Web Tokens (JWT)', level: 2 },
+      { id: 'middleware-and-abilities', title: 'Route Protection & Ability Scopes', level: 2 },
+      { id: 'configuration', title: 'Configuration & Key Management', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'api-overview',
+        headingTitle: 'API Authentication Overview',
+        content: `Spinx features a dual-driver API authentication engine built directly into the kernel:
+
+1. **Personal Access Tokens (PAT)**: Sanctum-style stateful bearer tokens stored as SHA-256 hashes in the database. Supports named devices, expiration dates, last-used tracking, and granular ability scopes.
+2. **Stateless JSON Web Tokens (JWT)**: RFC 7519 compliant HMAC-SHA256 tokens validated entirely in RAM with zero database lookups, providing blazing fast response times (>25,000 req/sec) on persistent RoadRunner workers.
+
+Both drivers are seamlessly consumed through the unified \`auth:api\` middleware and the \`Auth::user()\` / \`Request::bearerToken()\` facades.`,
+        callout: {
+          type: 'performance',
+          title: 'Zero Boot Overhead on API Calls',
+          message: 'Because Spinx keeps workers in memory, API requests execute in sub-millisecond times with zero framework boot penalty per request.',
+        },
+      },
+      {
+        headingId: 'headless-mode',
+        headingTitle: 'Headless / Decoupled API-Only Mode',
+        content: `Spinx is engineered to function as a high-performance headless JSON backend paired with external frontends like Next.js, Vite React/Vue SPAs, Nuxt.js, React Native, Flutter, Swift, or Kotlin.
+
+Scaffold an API-only application:
+
+\`\`\`bash
+spinx new my-backend --frontend=none
+\`\`\`
+
+In headless mode:
+- Controllers return \`Response::json($data, $status)\` — never SSR views.
+- \`CorsMiddleware\` handles cross-origin requests from \`http://localhost:3000\` or your production frontend domain.
+- Frontend apps send the \`Authorization: Bearer <token>\` header with every request.`,
+        codeSnippet: {
+          title: 'app/Modules/Auth/Infrastructure/Http/Controllers/ApiAuthController.php',
+          language: 'php',
+          code: `namespace App\\Modules\\Auth\\Infrastructure\\Http\\Controllers;
+
+use Spinx\\Http\\Request;
+use Spinx\\Http\\Response;
+use Spinx\\Auth\\Auth;
+
+final class ApiAuthController
+{
+    public function login(): Response
+    {
+        $data = Request::validate([
+            'email'    => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if (!Auth::attempt($data)) {
+            return Response::json(['error' => 'Invalid credentials'], 401);
+        }
+
+        $user     = Auth::user();
+        $newToken = $user->createToken('Mobile App', ['projects:create', 'projects:read']);
+
+        return Response::json([
+            'status'       => 'success',
+            'token_type'   => 'Bearer',
+            'access_token' => $newToken->plainTextToken, // e.g. "spinx_pat_1|a7b9c4..."
+            'user'         => [
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+            ],
+        ], 200);
+    }
+}`,
+        },
+      },
+      {
+        headingId: 'personal-access-tokens',
+        headingTitle: 'Personal Access Tokens (PAT)',
+        content: `Add the \`HasApiTokens\` trait to your User entity or Active Record model to unlock token issuing and revocation:`,
+        codeSnippet: {
+          title: 'Using HasApiTokens Trait',
+          language: 'php',
+          code: `namespace App\\Modules\\Auth\\Infrastructure\\Persistence\\Models;
+
+use Spinx\\Database\\Model;
+use Spinx\\Auth\\Traits\\HasApiTokens;
+
+final class User extends Model
+{
+    use HasApiTokens;
+
+    protected static string $table = 'users';
+}
+
+// 1. Issue token
+$token = $user->createToken('MacBook Pro', ['projects:create'], now()->addDays(30));
+echo $token->plainTextToken; // Shown once!
+
+// 2. Query user tokens
+$tokens = $user->tokens();
+
+// 3. Revoke single token (Sign out current device)
+$user->revokeCurrentToken();
+
+// 4. Revoke all tokens (Sign out everywhere)
+$user->revokeTokens();`,
+        },
+      },
+      {
+        headingId: 'stateless-jwt',
+        headingTitle: 'Stateless JSON Web Tokens (JWT)',
+        content: `When high throughput or microservices architecture requires zero-database validation, configure \`API_AUTH_DRIVER=jwt\` in your \`.env\`:`,
+        codeSnippet: {
+          title: 'Stateless JWT Issuing and Rotation',
+          language: 'php',
+          code: `use Spinx\\Auth\\Jwt\\Jwt;
+
+// 1. Generate short-lived access token (1 hour)
+$accessToken = Jwt::encode($user, ttlSeconds: 3600, claims: [
+    'role'      => 'author',
+    'abilities' => ['projects:create', 'chapters:write'],
+]);
+
+// 2. Generate long-lived refresh token (30 days)
+$refreshToken = Jwt::createRefreshToken($user, ttlSeconds: 2592000);
+
+// 3. Validate & decode token in memory (zero DB queries)
+$payload = Jwt::decode($accessToken);
+$userId  = $payload['sub'];
+
+// 4. Refresh token endpoint
+$claims = Jwt::tryDecode($refreshToken);
+if ($claims && ($claims['typ'] ?? '') === 'refresh') {
+    $user         = User::find($claims['sub']);
+    $newAccess    = Jwt::encode($user);
+    $newRefresh   = Jwt::createRefreshToken($user);
+}`,
+        },
+      },
+      {
+        headingId: 'middleware-and-abilities',
+        headingTitle: 'Route Protection & Ability Scopes',
+        content: `Protect API route groups in \`module.php\` and enforce granular token ability scopes:`,
+        codeSnippet: {
+          title: 'app/Modules/Projects/module.php — API Route Group',
+          language: 'php',
+          code: `use Spinx\\Routing\\RouteBuilder;
+
+return [
+    'routes' => static function (RouteBuilder $routes): void {
+        // Protected API endpoints
+        $routes->group(['prefix' => '/api/v1', 'middleware' => ['auth:api']], function (RouteBuilder $api): void {
+            // Profile endpoint
+            $api->get('/user', [ApiUserController::class, 'profile']);
+
+            // Require specific token ability
+            $api->post('/projects', [ApiProjectController::class, 'create'])
+                ->middleware('ability:projects:create');
+
+            // Multiple required abilities (AND logic)
+            $api->put('/projects/{id}', [ApiProjectController::class, 'update'])
+                ->middleware('ability:projects:write,projects:read');
+        });
+    },
+];`,
+        },
+      },
+      {
+        headingId: 'configuration',
+        headingTitle: 'Configuration & Key Management',
+        content: `Configure API authentication settings in \`config/auth.php\`:`,
+        codeSnippet: {
+          title: 'config/auth.php — API Configuration',
+          language: 'php',
+          code: `return [
+    'default' => [
+        'guard' => env('AUTH_GUARD', 'web'), // 'web' or 'api'
+    ],
+
+    'api' => [
+        'driver'       => env('API_AUTH_DRIVER', 'token'), // 'token' (PAT) | 'jwt'
+        'token_prefix' => 'spinx_pat_',
+        'expiration'   => null,                              // minutes (null = never expires)
+        'jwt_secret'   => env('JWT_SECRET', env('APP_KEY')),
+        'jwt_algo'     => 'HS256',                           // 'HS256' or 'HS512'
+        'jwt_ttl'      => 3600,                              // access token lifetime in seconds
+    ],
+
+    'providers' => [
+        'users' => [
+            'model' => App\\Modules\\Auth\\Infrastructure\\Persistence\\Models\\User::class,
+        ],
+    ],
+];`,
+        },
+      },
+    ],
+  },
 ];
+
