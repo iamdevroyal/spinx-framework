@@ -1657,7 +1657,363 @@ RouteBuilder::post('/webhooks/stripe', StripeWebhookController::class)
 \$query->orderBy('created_at', 'random_value');
 
 // Only valid values produce DESC:
-\$query->orderBy('created_at', 'DESC'); // ORDER BY created_at DESC`,
+$query->orderBy('created_at', 'DESC'); // ORDER BY created_at DESC`,
+        },
+      },
+    ],
+  },
+  // ─────────────────────────────────────────────────────────────────────────
+  // NEW: Directives & Templating Engine
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: 'templating-directives',
+    path: '/docs/templating-directives',
+    category: 'Frontend & Islands',
+    title: 'Spinx Directives & Templating Engine',
+    subtitle: 'Over 40+ built-in template directives for layout nesting, dynamic CSS, form bindings, auth guards, flash alerts, and reactive islands.',
+    description: 'Master Spinx Directives to eliminate spaghetti PHP and ternary soup. Features clean page layouts with @layout and @slot, dynamic styling with @class and @style, form security with @csrf and @honeypot, safe array echos, and client-side island hydration.',
+    readTime: '8 min read',
+    lastUpdated: 'v1.0.21 (Latest Feature)',
+    badge: 'Directives',
+    headings: [
+      { id: 'directives-overview', title: 'Directives Overview', level: 2 },
+      { id: 'layouts-and-slots', title: 'Layouts, Slots & Stacks', level: 2 },
+      { id: 'dynamic-styling', title: 'Dynamic Classes & CSS Styles', level: 2 },
+      { id: 'forms-and-security', title: 'Forms, HTTP Spoofing & Honeypots', level: 2 },
+      { id: 'smart-loops', title: 'Smart Loops & Empty Fallbacks', level: 2 },
+      { id: 'auth-and-guards', title: 'Authentication & Role Guards', level: 2 },
+      { id: 'alerts-and-errors', title: 'Validation Errors & Flash Messages', level: 2 },
+      { id: 'seo-and-media', title: 'SEO, SVG Inlining & Formatting', level: 2 },
+      { id: 'javascript-state', title: 'JavaScript State & Reactive Islands', level: 2 },
+      { id: 'caching-and-debugging', title: 'Fragment Caching & Profiling', level: 2 },
+      { id: 'directives-cheat-sheet', title: 'Directives Quick Reference Table', level: 2 },
+    ],
+    sections: [
+      {
+        headingId: 'directives-overview',
+        headingTitle: 'Directives Overview',
+        content: `Spinx Directives compile directly into high-performance plain PHP in storage/cache/views during the first request and remain warmed in RAM across RoadRunner/Swoole requests.
+
+Unlike traditional server-only template engines, Spinx Directives integrate server-side control flow with client-side reactive islands (@island), automated script stack aggregation (@push/@stack), dynamic CSS class bindings (@class), and resilient multi-message error rendering without PHP array-to-string notices.`,
+        callout: {
+          type: 'tip',
+          title: 'Zero Runtime Overhead',
+          message: 'Templates are compiled once and saved to disk. When executed by RoadRunner persistent workers, compiled PHP views execute at native C-extension speeds.',
+        },
+      },
+      {
+        headingId: 'layouts-and-slots',
+        headingTitle: 'Layouts, Slots & Stacks',
+        content: `Build clean, nested page layouts with master wrappers, named slots, and head/footer script stacks:`,
+        codeSnippet: {
+          title: 'app.spinx.html (Master Layout) & dashboard.spinx.html (Child Page)',
+          language: 'html',
+          code: `<!-- views/Shared/app.spinx.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ $title ?? 'Spinx App' }}</title>
+    @vite
+    @stack('styles')
+</head>
+<body class="bg-dark text-white">
+    <aside>
+        @renderSlot('sidebar', 'Default Navigation Menu')
+    </aside>
+
+    <main>
+        {!! $slot !!}
+    </main>
+
+    @stack('scripts')
+</body>
+</html>
+
+<!-- views/Dashboard/index.spinx.html -->
+@layout('Shared::app', ['title' => 'My Dashboard'])
+
+@slot('sidebar')
+    <ul>
+        <li><a href="/projects">My Projects</a></li>
+        <li><a href="/settings">Settings</a></li>
+    </ul>
+@endslot
+
+<div class="p-8">
+    <h1>Welcome, {{ $user->name }}</h1>
+    @island('ProjectList', ['userId' => $user->id])
+</div>
+
+@push('scripts')
+    <script>console.log('Dashboard loaded');</script>
+@endpush
+
+@endlayout`,
+        },
+      },
+      {
+        headingId: 'dynamic-styling',
+        headingTitle: 'Dynamic Classes & CSS Styles',
+        content: `Eliminate messy string concatenations with conditional class and style builders:`,
+        codeSnippet: {
+          title: 'Dynamic Classes & Inline Styles',
+          language: 'html',
+          code: `<!-- Conditional Class Attribute -->
+<button @class([
+    'btn',
+    'btn-primary' => $isPrimary,
+    'btn-danger'  => $isDanger,
+    'opacity-50 cursor-not-allowed' => $isDisabled,
+])>
+    Save Changes
+</button>
+
+<!-- Conditional Style Attribute -->
+<div @style([
+    'background-color: ' . $customColor => !empty($customColor),
+    'display: none' => $isHidden,
+    'font-weight: bold' => $isImportant,
+])>
+    Card content
+</div>
+
+<!-- Inline CSS Pushed to Head -->
+@css
+<style>
+    .glass-panel { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
+</style>
+@endcss`,
+        },
+      },
+      {
+        headingId: 'forms-and-security',
+        headingTitle: 'Forms, HTTP Spoofing & Honeypots',
+        content: `Simplify form generation with CSRF protection, method spoofing, old input restoration, and boolean attribute flags:`,
+        codeSnippet: {
+          title: 'Complete Secure Form Example',
+          language: 'html',
+          code: `<form action="/projects/{{ $project->id }}" method="POST">
+    @csrf
+    @method('PUT')
+    @honeypot
+
+    <div class="form-group">
+        <label>Project Name</label>
+        <input type="text" name="name" value="{{ @old('name', $project->name) }}" @required(true) @autofocus($hasError)>
+        @error('name')
+            <p class="error-text">{{ $message }}</p>
+        @enderror
+    </div>
+
+    <div class="form-group">
+        <label>Format</label>
+        <select name="format">
+            <option value="novel" @selected($project->format === 'novel')>Novel</option>
+            <option value="screenplay" @selected($project->format === 'screenplay')>Screenplay</option>
+        </select>
+    </div>
+
+    <label>
+        <input type="checkbox" name="is_public" value="1" @checked($project->isPublic)>
+        Public project
+    </label>
+
+    <button type="submit" @disabled($isLocked)>Update Project</button>
+</form>`,
+        },
+      },
+      {
+        headingId: 'smart-loops',
+        headingTitle: 'Smart Loops & Empty Fallbacks',
+        content: `Iterate collections with automatic empty-state fallbacks and meta loop context variables ($loop->first, $loop->last, $loop->iteration, $loop->even, $loop->odd):`,
+        codeSnippet: {
+          title: 'Smart Loop Iteration',
+          language: 'html',
+          code: `@loop($chapters as $chapter)
+    <div @class(['chapter-row', 'bg-dark' => $loop->odd, 'bg-darker' => $loop->even])>
+        <span>Chapter {{ $loop->iteration }}: {{ $chapter->title }}</span>
+        <span>Last edited @timeAgo($chapter->updatedAt)</span>
+    </div>
+@empty
+    <div class="empty-state">
+        <p>No chapters created yet. Click "New Chapter" to start drafting.</p>
+    </div>
+@endloop`,
+        },
+      },
+      {
+        headingId: 'auth-and-guards',
+        headingTitle: 'Authentication & Role Guards',
+        content: `Render markup based on user authentication state, roles, and permissions:`,
+        codeSnippet: {
+          title: 'Auth & Authorization Directives',
+          language: 'html',
+          code: `@auth
+    <div class="user-menu">
+        @avatar($user, ['size' => 36])
+        <span>{{ $user->name }}</span>
+        <form action="/logout" method="POST">@csrf <button>Sign Out</button></form>
+    </div>
+@else
+    <div class="auth-buttons">
+        <a href="/login">Sign In</a>
+        <a href="/register">Create Account</a>
+    </div>
+@endauth
+
+@role('admin')
+    <a href="/admin/system" class="admin-badge">Admin Console</a>
+@endrole
+
+@can('publish-chapter', $chapter)
+    <button class="btn-publish">Publish Chapter</button>
+@endcan`,
+        },
+      },
+      {
+        headingId: 'alerts-and-errors',
+        headingTitle: 'Validation Errors & Flash Messages',
+        content: `Easily display session notifications and form validation errors:`,
+        codeSnippet: {
+          title: 'Flash Alerts & Validation Error Blocks',
+          language: 'html',
+          code: `<!-- Single Flash Notification -->
+@flash('success')
+    <div class="alert alert-success">
+        <span>✓</span> {{ $message }}
+    </div>
+@endflash
+
+<!-- Iterate Any Flash Type (success, error, warning, info) -->
+@flashAny
+    <div class="alert alert-{{ $type }}">
+        {{ $message }}
+    </div>
+@endflashAny
+
+<!-- Global Validation Error Banner -->
+@hasErrors
+    <div class="alert alert-danger">
+        <strong>Please fix the errors below:</strong>
+        @foreach ($errors as $field => $msgs)
+            @foreach ((array) $msgs as $err)
+                <p>• {{ $err }}</p>
+            @endforeach
+        @endforeach
+    </div>
+@endhasErrors`,
+        },
+      },
+      {
+        headingId: 'seo-and-media',
+        headingTitle: 'SEO, SVG Inlining & Formatting',
+        content: `Manage OpenGraph metadata, JSON-LD Schema, inline SVGs, human-readable numbers, and relative dates:`,
+        codeSnippet: {
+          title: 'SEO, Media & Formatting Helpers',
+          language: 'html',
+          code: `<!-- Full SEO & OpenGraph Meta Tags -->
+@seo([
+    'title'       => 'The Last Light Before Dawn',
+    'description' => 'A historical literary novel generated by autonomous AI agents.',
+    'image'       => '/covers/novel.jpg',
+    'canonical'   => 'https://writta.app/books/last-light',
+])
+
+<!-- Inlined Sanitized SVG with Tailwind/CSS classes -->
+@svg('icons/quill.svg', ['class' => 'w-6 h-6 text-pink-500'])
+
+<!-- User Avatar with Initials Fallback -->
+@avatar($author, ['size' => 48, 'class' => 'shadow-lg'])
+
+<!-- Human Formatting Directives -->
+<p>Word Count: {{ number_format($words) }} (@plural($chaptersCount, 'chapter'))</p>
+<p>Created: @date($createdAt, 'F j, Y') (@timeAgo($createdAt))</p>
+<p>Manuscript Size: @fileSize($docBytes)</p>
+<p>Subscription: @money(19.99, 'USD') / month</p>`,
+        },
+      },
+      {
+        headingId: 'javascript-state',
+        headingTitle: 'JavaScript State & Reactive Islands',
+        content: `Pass backend state seamlessly to client-side scripts and reactive Vue/React islands:`,
+        codeSnippet: {
+          title: 'JavaScript & Island Directives',
+          language: 'html',
+          code: `<!-- Inlined Safe JavaScript Object -->
+<script>
+    const userSession = @js($user);
+</script>
+
+<!-- Global Window State Variable -->
+@window('WrittaState', [
+    'apiUrl'     => '/api/v1',
+    'projectId'  => $project->id,
+    'authToken'  => $sessionToken,
+])
+
+<!-- Reactive Vue / React Client Island -->
+@island('ManuscriptEditor', [
+    'projectId' => $project->id,
+    'chapters'  => $chapters,
+])
+
+<!-- Lazy-Hydrated Island (Mounted on Scroll via IntersectionObserver) -->
+@islandLazy('AnalyticsChart', [
+    'stats' => $dailyWordStats,
+])
+
+<!-- Real-time WebSocket Channel Hook -->
+@broadcast('projects.' . $project->id, 'ChapterUpdated')`,
+        },
+      },
+      {
+        headingId: 'caching-and-debugging',
+        headingTitle: 'Fragment Caching & Profiling',
+        content: `Cache expensive subview HTML chunks and benchmark render performance in development:`,
+        codeSnippet: {
+          title: 'Fragment Caching & Profiling',
+          language: 'html',
+          code: `<!-- Fragment Caching (Cached in Redis/Filesystem for 1 hour) -->
+@cache('sidebar-popular-novels', 3600)
+    <div class="popular-novels-widget">
+        @foreach ($popularNovels as $novel)
+            <div class="novel-card">{{ $novel->title }}</div>
+        @endforeach
+    </div>
+@endcache
+
+<!-- Execution Time & Memory Benchmark (Appends HTML comment with ms & KB) -->
+@benchmark('agent-pipeline-render')
+    @include('Shared::agent-status-panel')
+@endbenchmark
+
+<!-- Dev Mode Debug Dumps -->
+@dev
+    <div class="debug-drawer">
+        @dump($debugContext)
+    </div>
+@enddev`,
+        },
+      },
+      {
+        headingId: 'directives-cheat-sheet',
+        headingTitle: 'Directives Quick Reference Table',
+        content: `Quick reference table of all available Spinx Directives:`,
+        tableData: {
+          headers: ['Category', 'Directives', 'Primary Use Case'],
+          rows: [
+            ['Layouts', '@layout, @endlayout, @slot, @endslot, @renderSlot, @push, @prepend, @stack, @once', 'Master layouts, component slots, script/style stacks'],
+            ['Forms', '@csrf, @method, @honeypot, @old, @checked, @selected, @disabled, @readonly, @required, @autofocus', 'Secure forms, method spoofing, anti-bot, attribute flags'],
+            ['Styling', '@class, @style, @css, @endcss, @dark, @light', 'Dynamic conditional classes, inline styles, dark/light themes'],
+            ['Control Flow', '@if, @elseif, @else, @endif, @unless, @when, @has, @missing', 'Server-side condition evaluation and guards'],
+            ['Iteration', '@foreach, @endforeach, @loop, @empty, @endloop', 'Array/collection loops with $loop helper and empty fallback'],
+            ['Auth & Access', '@auth, @endauth, @guest, @endguest, @role, @can', 'User session checks, role requirements, permission policies'],
+            ['Alerts', '@error, @enderror, @hasErrors, @endhasErrors, @flash, @flashAny', 'Form validation errors and session flash toasts'],
+            ['Formatting', '@date, @timeAgo, @money, @fileSize, @truncate, @plural', 'Human-friendly dates, currencies, byte sizes, plural words'],
+            ['SEO & Media', '@seo, @title, @meta, @schema, @svg, @image, @avatar', 'OpenGraph, JSON-LD, inlined SVG vectors, responsive images'],
+            ['JS & Islands', '@js, @script, @window, @island, @islandLazy, @broadcast, @vite', 'Vite assets, JS variables, reactive Vue/React islands'],
+            ['Performance', '@cache, @endcache, @benchmark, @dump, @dd, @dev, @production', 'HTML fragment caching, benchmark profiling, debug inspection'],
+          ],
         },
       },
     ],

@@ -399,29 +399,74 @@ $data = Validate::make($request->all(), [
 
 ---
 
-## 16. Templating & Reactive Islands
+## 16. Templating & Spinx Directives (40+ Built-In Directives)
+
+Spinx provides over 40+ native directives for zero-boilerplate view construction:
 
 ```html
-{{!-- resources/views/layout.spinx.html --}}
+{{!-- views/Shared/app.spinx.html (Master Layout) --}}
 <!DOCTYPE html>
 <html>
-<head>@vite(['resources/css/app.css', 'resources/js/app.js'])</head>
-<body>
-    @csrf
-    @yield('content')
-    @island('UserDashboard', { userId: {{ $user->id }} })
+<head>
+    @seo(['title' => $title ?? 'Spinx App', 'description' => 'Built with Spinx'])
+    @vite
+    @stack('styles')
+</head>
+<body class="bg-dark text-white">
+    <aside>
+        @renderSlot('sidebar', 'Default Menu')
+    </aside>
+
+    <main>
+        {!! $slot !!}
+    </main>
+
+    @stack('scripts')
 </body>
 </html>
 
-{{!-- Extends layout --}}
-@extends('layout')
-@section('content')
-    <h1>{{ $title }}</h1>
-    @foreach($items as $item)
-        <p>{{ $item->name }}</p>
-    @endforeach
-@endsection
+{{!-- views/Projects/index.spinx.html (Child Page) --}}
+@layout('Shared::app', ['title' => 'My Projects'])
+
+@slot('sidebar')
+    <nav><ul><li><a href="/dashboard">Dashboard</a></li></ul></nav>
+@endslot
+
+<div class="p-8">
+    <button @class(['btn', 'btn-primary' => $isPro, 'opacity-50' => $isLocked]) @style(['background: ' . $brandColor => !empty($brandColor)])>
+        New Project
+    </button>
+
+    @loop($projects as $project)
+        <div @class(['project-card', 'odd' => $loop->odd])>
+            <h3>{{ $loop->iteration }}. {{ $project->title }}</h3>
+            <p>Last edited @timeAgo($project->updatedAt)</p>
+        </div>
+    @empty
+        <p>No projects found.</p>
+    @endloop
+
+    @island('ProjectEditor', ['userId' => $user->id])
+</div>
+
+@push('scripts')
+    <script>const userState = @js($user);</script>
+@endpush
+
+@endlayout
 ```
+
+### Directives Quick Reference
+- **Layouts & Slots**: `@layout`, `@endlayout`, `@slot`, `@endslot`, `@renderSlot`, `@push`, `@prepend`, `@stack`, `@once`
+- **Forms & Security**: `@csrf`, `@method('PUT')`, `@honeypot`, `@old('field')`, `@checked`, `@selected`, `@disabled`, `@readonly`, `@required`, `@autofocus`
+- **Styling & Assets**: `@class([...])`, `@style([...])`, `@css ... @endcss`, `@dark`, `@light`, `@svg('path')`, `@image('path')`, `@avatar($user)`
+- **Errors & Flash**: `@error('field') ... @enderror`, `@hasErrors`, `@flash('success') ... @endflash`, `@flashAny`
+- **Auth & Access**: `@auth ... @endauth`, `@guest ... @endguest`, `@role('admin')`, `@can('edit', $post)`
+- **Iteration & Logic**: `@loop($items as $item) ... @empty ... @endloop`, `@when($cond)`, `@unless($cond)`, `@has($var)`, `@missing($var)`
+- **Formatting**: `@date($d)`, `@timeAgo($d)`, `@money($val, 'USD')`, `@fileSize($bytes)`, `@truncate($str, 100)`, `@plural($count, 'item')`
+- **JS & Islands**: `@js($data)`, `@script ... @endscript`, `@window('Name', $data)`, `@island('Component', $props)`, `@islandLazy`, `@broadcast`
+- **Caching & Dev**: `@cache('key', 3600) ... @endcache`, `@benchmark('name') ... @endbenchmark`, `@dump($var)`, `@dd($var)`, `@dev`, `@production`
+
 
 ---
 
